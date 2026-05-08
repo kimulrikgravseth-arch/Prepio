@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Priser – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="priser.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">Prepio</a>
+      <nav class="nav-links">
+        <a href="/priser"            class="nav-link nav-link-active">Priser</a>
+        <a href="/cv-analyse"        class="nav-link">CV-analyse</a>
+        <a href="/soknadsbrev"       class="nav-link">Søknadsbrev</a>
+        <a href="/lonnskalkulator"   class="nav-link">Lønnskalkulator</a>
+        <a href="/bedriftsbibliotek" class="nav-link">Bedrifter</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+        <a href="/interview" class="btn btn-primary">Kom i gang</a>
+                        </div>
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="pricing-hero">
+    <h1 class="pricing-title">Enkel og ærlig prising</h1>
+    <p class="pricing-subtitle">Kom i gang gratis. Oppgrader når du er klar.</p>
+  </section>
+
+  <!-- PLANS -->
+  <section class="plans-section">
+    <div class="plans-grid">
+
+      <!-- GRATIS -->
+      <div class="plan-card">
+        <div class="plan-header">
+          <span class="plan-name">Gratis</span>
+          <div class="plan-price">
+            <span class="price-amount">0</span>
+            <span class="price-unit">kr/mnd</span>
+          </div>
+          <p class="plan-tagline">Prøv Prepio uten risiko</p>
+        </div>
+        <a href="/interview" class="btn btn-outline btn-large plan-btn">Kom i gang</a>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> 3 gratis intervjuer</li>
+          <li><span class="check">✓</span> Grunnleggende tilbakemelding</li>
+          <li><span class="check">✓</span> Ingen kredittkort nødvendig</li>
+        </ul>
+      </div>
+
+      <!-- STANDARD -->
+      <div class="plan-card plan-featured">
+        <div class="plan-badge">Mest populær</div>
+        <div class="plan-header">
+          <span class="plan-name">Standard</span>
+          <div class="plan-price">
+            <span class="price-amount">199</span>
+            <span class="price-unit">kr/mnd</span>
+          </div>
+          <p class="plan-tagline">For seriøse jobbsøkere</p>
+        </div>
+        <button class="btn btn-primary btn-large plan-btn" onclick="showToast('Betaling kommer snart!')">Start Standard</button>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> Alt i Gratis</li>
+          <li><span class="check">✓</span> Ubegrenset intervjutrening</li>
+          <li><span class="check">✓</span> Detaljert tilbakemelding og score</li>
+          <li><span class="check">✓</span> Fremgangslogg</li>
+          <li><span class="check">✓</span> Norsk arbeidskultur-tilpasning</li>
+        </ul>
+      </div>
+
+      <!-- PRO -->
+      <div class="plan-card">
+        <div class="plan-header">
+          <span class="plan-name">Pro</span>
+          <div class="plan-price">
+            <span class="price-amount">299</span>
+            <span class="price-unit">kr/mnd</span>
+          </div>
+          <p class="plan-tagline">Alt du trenger for å lykkes</p>
+        </div>
+        <button class="btn btn-primary btn-large plan-btn" onclick="showToast('Betaling kommer snart!')">Start Pro</button>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> Alt i Standard</li>
+          <li><span class="check">✓</span> CV-analyse</li>
+          <li><span class="check">✓</span> Søknadsbrev-generator</li>
+          <li><span class="check">✓</span> Lønnskalkulator</li>
+          <li><span class="check">✓</span> Bedriftsbibliotek</li>
+          <li><span class="check">✓</span> Prioritert support</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section">
+    <div class="faq-container">
+      <h2 class="faq-title">Ofte stilte spørsmål</h2>
+
+      <div class="faq-list">
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Kan jeg avbestille når som helst?
+            <svg class="faq-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Ja, ingen bindingstid. Du kan avbestille abonnementet ditt når som helst, og det løper ut ved slutten av gjeldende periode.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Er det norsk support?
+            <svg class="faq-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Ja, vi svarer alltid på norsk. Support-teamet vårt er tilgjengelig på hverdager og besvarer henvendelser innen én arbeidsdag.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" aria-expanded="false">
+            Hva skjer når gratis-intervjuene er brukt opp?
+            <svg class="faq-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="faq-answer">
+            Du kan oppgradere til Standard eller Pro for å fortsette ubegrenset, eller vente til neste måned da kvoten nullstilles automatisk.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <span class="footer-logo">Prepio</span>
+      <span class="footer-copy">&copy; 2026 Prepio. Alle rettigheter forbeholdt.</span>
+    </div>
+  </footer>
+
+  <script src="utils.js"></script>
+  <script src="priser.js"></script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+/* ===== LØNNSKALKULATOR PAGE ===== */
+.lk-wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 100px 24px 80px;
+}
+
+.lk-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.lk-title {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.lk-subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Form card */
+.lk-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  animation: fadeUp 0.5s ease both;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.field-group input {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  outline: none;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.field-group input::placeholder { color: #9CA3AF; }
+
+.field-group input:hover { border-color: #9CA3AF; }
+
+.field-group input:focus {
+  border-color: var(--primary);
+  background: #FFFAF7;
+  box-shadow: 0 0 0 3px rgba(252, 106, 3, 0.1);
+}
+
+/* Select */
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper select {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 44px 13px 16px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.select-wrapper select:hover { border-color: #9CA3AF; }
+
+.select-wrapper select:focus {
+  border-color: var(--primary);
+  background: #FFFAF7;
+  box-shadow: 0 0 0 3px rgba(252, 106, 3, 0.1);
+}
+
+.select-wrapper select option { background: #FFFFFF; color: var(--text); }
+
+.select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: transform var(--transition);
+}
+
+.select-wrapper select:focus + .select-arrow {
+  transform: translateY(-50%) rotate(180deg);
+  color: var(--primary);
+}
+
+.btn-full { width: 100%; justify-content: center; }
+
+#calc-btn:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== LOADING ===== */
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 80px 24px;
+  text-align: center;
+  animation: fadeUp 0.4s ease both;
+}
+
+.loading-spinner {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.loading-spinner .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: bounce 1.2s infinite ease-in-out;
+}
+.loading-spinner .dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-spinner .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.4; }
+  30%            { transform: translateY(-6px); opacity: 1;   }
+}
+
+.loading-text { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.loading-sub  { font-size: 0.88rem; color: var(--text-muted); }
+
+/* ===== RESULTS ===== */
+#result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Salary hero card */
+.salary-hero {
+  background: #FFFFFF;
+  border: 1px solid #FFD4B3;
+  border-radius: 20px;
+  padding: 40px 36px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(252, 106, 3, 0.1);
+  animation: fadeUp 0.45s ease both;
+}
+
+.salary-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.salary-range {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.salary-amount {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -2px;
+  line-height: 1;
+}
+
+.salary-sep {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.salary-unit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 6px;
+}
+
+.salary-median-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.median-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--accent);
+  border: 1px solid #FFD4B3;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.median-amount {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.median-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Current salary comparison */
+.comparison-bar {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.comparison-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar-range {
+  position: absolute;
+  height: 100%;
+  background: #FFD4B3;
+  border-radius: 999px;
+}
+
+.bar-current {
+  position: absolute;
+  width: 3px;
+  height: 100%;
+  background: #16A34A;
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.bar-current-label {
+  font-size: 0.75rem;
+  color: #16A34A;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+/* Info cards */
+.result-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: fadeUp 0.45s ease both;
+}
+
+.result-card:nth-child(2) { animation-delay: 0.08s; }
+.result-card:nth-child(3) { animation-delay: 0.16s; }
+.result-card:nth-child(4) { animation-delay: 0.24s; }
+.result-card:nth-child(5) { animation-delay: 0.32s; }
+
+.result-card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.rc-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rc-utvikling .result-card-title { color: var(--primary); }
+.rc-utvikling .rc-icon { background: var(--accent); color: var(--primary); }
+
+.rc-tips .result-card-title { color: #16A34A; }
+.rc-tips .rc-icon { background: #F0FDF4; color: #16A34A; }
+
+.rc-advarsel .result-card-title { color: #EA580C; }
+.rc-advarsel .rc-icon { background: #FFF7ED; color: #EA580C; }
+
+.result-card-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.result-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-list li {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding-left: 14px;
+  border-left: 2px solid var(--border);
+}
+
+.rc-tips    .result-list li { border-left-color: #86EFAC; }
+.rc-advarsel .result-list li { border-left-color: #FED7AA; }
+
+/* ===== FORHANDLINGSSTRATEGI ===== */
+
+/* Hoved-seksjon med oransje venstre-border */
+.strategi-seksjon {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeUp 0.45s 0.28s ease both;
+}
+
+.strategi-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.3px;
+}
+
+.strategi-header-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent);
+  border: 1px solid #FFD4B3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Nummererte steg */
+.strategi-steg-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.strategi-steg {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.steg-nummer {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.steg-innhold {
+  flex: 1;
+}
+
+.steg-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.steg-tekst {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+/* Åpningsetninger */
+.strategi-aapning {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.strategi-sub-tittel {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.aapning-setning {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-left: 3px solid #FFD4B3;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.aapning-sitat {
+  font-size: 0.91rem;
+  color: var(--text);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* Andre goder */
+.strategi-goder {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goder-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gode-chip {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--accent);
+  border: 1px solid #FFD4B3;
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+
+/* Vanlige feil */
+.rc-vanlige-feil .result-card-title { color: #DC2626; }
+.rc-vanlige-feil .rc-icon { background: #FEF2F2; color: #DC2626; }
+
+.feil-liste {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feil-liste li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.feil-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Pep-talk / mental forberedelse */
+.pep-talk-card {
+  background: #FFF4EE;
+  border: 1px solid #FFD4B3;
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  animation: fadeUp 0.45s 0.36s ease both;
+}
+
+.pep-talk-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pep-talk-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.pep-talk-tittel {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.pep-talk-tekst {
+  font-size: 0.92rem;
+  color: #92400E;
+  line-height: 1.7;
+}
+
+/* Actions */
+.result-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  animation: fadeUp 0.45s 0.3s ease both;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .lk-card      { padding: 24px 20px; }
+  .form-row     { grid-template-columns: 1fr; }
+  .salary-hero  { padding: 28px 20px; }
+  .salary-amount { font-size: 2rem; }
+}

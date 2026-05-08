@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Søknadsbrev – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="soknadsbrev.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">Prepio</a>
+      <nav class="nav-links">
+        <a href="/priser"            class="nav-link">Priser</a>
+        <a href="/cv-analyse"        class="nav-link">CV-analyse</a>
+        <a href="/soknadsbrev"       class="nav-link nav-link-active">Søknadsbrev</a>
+        <a href="/lonnskalkulator"   class="nav-link">Lønnskalkulator</a>
+        <a href="/bedriftsbibliotek" class="nav-link">Bedrifter</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+        <a href="/interview" class="btn btn-primary">Kom i gang</a>
+                        </div>
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+  </nav>
+
+  <div class="sb-wrapper">
+
+    <a href="/" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Tilbake
+    </a>
+
+    <!-- FORM VIEW -->
+    <div id="form-view">
+      <div class="sb-header">
+        <h1 class="sb-title">Søknadsbrev-generator</h1>
+        <p class="sb-subtitle">Få et profesjonelt søknadsbrev på sekunder, tilpasset stillingen du søker</p>
+      </div>
+
+      <div class="sb-card">
+        <div class="form-row">
+          <div class="field-group">
+            <label for="name">Ditt navn</label>
+            <input type="text" id="name" placeholder="f.eks. Kari Nordmann" autocomplete="name" maxlength="100" />
+          </div>
+          <div class="field-group">
+            <label for="job-title">Stillingstittel du søker</label>
+            <input type="text" id="job-title" placeholder="f.eks. Markedskoordinator" autocomplete="off" maxlength="200" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="company">Bedriftsnavn</label>
+          <input type="text" id="company" placeholder="f.eks. DNB" autocomplete="off" maxlength="200" />
+        </div>
+
+        <div class="field-group">
+          <label for="job-desc">Stillingsbeskrivelse</label>
+          <textarea id="job-desc" placeholder="Lim inn stillingsbeskrivelsen her..." rows="6" maxlength="6000"></textarea>
+        </div>
+
+        <div class="field-group">
+          <label for="about">Kort om deg selv</label>
+          <textarea id="about" placeholder="F.eks: Jeg har 2 års erfaring fra markedsføring, er strukturert og liker å jobbe i team..." rows="5" maxlength="3000"></textarea>
+        </div>
+
+        <button id="generate-btn" class="btn btn-primary btn-large btn-full" disabled>
+          Generer søknadsbrev →
+        </button>
+      </div>
+    </div>
+
+    <!-- LOADING VIEW -->
+    <div id="loading-view" hidden>
+      <div class="loading-card">
+        <div class="loading-spinner">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <p class="loading-text">Skriver søknadsbrevet ditt...</p>
+        <p class="loading-sub">Dette tar vanligvis 10–15 sekunder</p>
+      </div>
+    </div>
+
+    <!-- RESULT VIEW -->
+    <div id="result-view" hidden>
+      <div class="result-header">
+        <div class="result-meta">
+          <h2 class="result-title">Søknadsbrevet ditt er klart</h2>
+          <p class="result-subtitle">Les gjennom, gjør eventuelle justeringer, og send!</p>
+        </div>
+        <div class="result-actions-top">
+          <button id="copy-btn" class="btn btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Kopier brevet
+          </button>
+        </div>
+      </div>
+
+      <div class="letter-paper">
+        <div id="letter-content" class="letter-text"></div>
+      </div>
+
+      <div class="result-actions-bottom">
+        <button id="reset-btn" class="btn btn-outline btn-large">Generer et nytt</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <span class="footer-logo">Prepio</span>
+      <span class="footer-copy">&copy; 2026 Prepio. Alle rettigheter forbeholdt.</span>
+    </div>
+  </footer>
+
+  <script src="utils.js"></script>
+  <script src="soknadsbrev.js"></script>
+</body>
+</html>

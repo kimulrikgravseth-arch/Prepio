@@ -1,0 +1,213 @@
+/* ===== INTERVIEW SETUP PAGE ===== */
+.interview-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 24px 60px;
+  background: var(--bg-subtle);
+}
+
+.setup-wrapper {
+  width: 100%;
+  max-width: 680px;
+  position: relative;
+}
+
+/* Card */
+.setup-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 48px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  animation: fadeUp 0.5s ease both;
+}
+
+.setup-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.setup-header .logo {
+  display: inline-block;
+  font-size: 1.2rem;
+  font-weight: 800;
+  text-decoration: none;
+  background: linear-gradient(135deg, #0A1628 0%, #FC6A03 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 24px;
+}
+
+.setup-title {
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.setup-subtitle {
+  color: var(--text-muted);
+  font-size: 0.97rem;
+}
+
+/* Form */
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+
+/* Inputs & textarea */
+.field-group input,
+.field-group textarea {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  resize: none;
+  width: 100%;
+}
+
+.field-group input::placeholder,
+.field-group textarea::placeholder {
+  color: #9CA3AF;
+}
+
+.field-group input:hover,
+.field-group textarea:hover {
+  border-color: #9CA3AF;
+}
+
+.field-group input:focus,
+.field-group textarea:focus {
+  border-color: var(--primary);
+  background: #FFFAF7;
+  box-shadow: 0 0 0 3px rgba(252, 106, 3, 0.1);
+}
+
+/* Invalid state */
+.field-group input.invalid,
+.field-group textarea.invalid,
+.field-group .select-wrapper.invalid select {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Select */
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper select {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 44px 13px 16px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.select-wrapper select:hover {
+  border-color: #9CA3AF;
+}
+
+.select-wrapper select:focus {
+  border-color: var(--primary);
+  background: #FFFAF7;
+  box-shadow: 0 0 0 3px rgba(252, 106, 3, 0.1);
+}
+
+.select-wrapper select option {
+  background: #FFFFFF;
+  color: var(--text);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: transform var(--transition);
+}
+
+.select-wrapper select:focus + .select-arrow {
+  transform: translateY(-50%) rotate(180deg);
+  color: var(--primary);
+}
+
+/* Submit button */
+.btn-full { width: 100%; justify-content: center; }
+
+#submit-btn {
+  margin-top: 6px;
+  font-size: 1rem;
+  padding: 16px;
+  border-radius: var(--radius);
+  transition: all var(--transition);
+}
+
+#submit-btn:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#submit-btn:not(:disabled) {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(252, 106, 3, 0.25);
+  cursor: pointer;
+}
+
+#submit-btn:not(:disabled):hover {
+  background: var(--primary-hover);
+  box-shadow: 0 6px 24px rgba(252, 106, 3, 0.35);
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .setup-card { padding: 32px 24px; }
+  .form-row { grid-template-columns: 1fr; }
+  .interview-page { padding: 24px 16px 40px; }
+}

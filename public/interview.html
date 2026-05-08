@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sett opp intervju – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="interview.css" />
+</head>
+<body class="interview-page">
+
+  <div class="setup-wrapper">
+
+    <a href="/" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Tilbake
+    </a>
+
+    <div class="setup-card">
+
+      <div class="setup-header">
+        <a href="/" class="logo">Prepio</a>
+        <h1 class="setup-title">La oss sette opp intervjuet ditt</h1>
+        <p class="setup-subtitle">Fyll inn informasjon om stillingen du søker på</p>
+      </div>
+
+      <form id="interview-form" class="setup-form" novalidate>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label for="job-title">Stillingstittel</label>
+            <input
+              type="text"
+              id="job-title"
+              name="jobTitle"
+              placeholder="f.eks. Markedskoordinator"
+              autocomplete="off"
+              maxlength="200"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="company">Bedriftsnavn</label>
+            <input
+              type="text"
+              id="company"
+              name="company"
+              placeholder="f.eks. DNB"
+              autocomplete="off"
+              maxlength="200"
+            />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="description">Stillingsbeskrivelse</label>
+          <textarea
+            id="description"
+            name="description"
+            placeholder="Lim inn stillingsbeskrivelsen her..."
+            rows="7"
+            maxlength="8000"
+          ></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label for="experience">Erfaringsnivå</label>
+            <div class="select-wrapper">
+              <select id="experience" name="experience">
+                <option value="" disabled selected>Velg erfaringsnivå</option>
+                <option value="student">Student / nyutdannet</option>
+                <option value="1-3">1–3 års erfaring</option>
+                <option value="3-5">3–5 års erfaring</option>
+                <option value="5+">5+ års erfaring</option>
+              </select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="interview-style">Intervjustil</label>
+            <div class="select-wrapper">
+              <select id="interview-style" name="interviewStyle">
+                <option value="standard" selected>Standard</option>
+                <option value="avslappet">Avslappet</option>
+                <option value="krevende">Krevende</option>
+              </select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-primary btn-large btn-full" disabled>
+          Start intervju &rarr;
+        </button>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="utils.js"></script>
+  <script src="interview.js"></script>
+</body>
+</html>

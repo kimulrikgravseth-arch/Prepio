@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prepio – AI-intervjutrener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">Prepio</a>
+
+      <nav class="nav-links">
+        <a href="/priser" class="nav-link">Priser</a>
+
+        <!-- Verktøy-dropdown -->
+        <div class="nav-dropdown">
+          <button class="nav-link nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
+            Verktøy
+            <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="nav-dropdown-menu" role="menu">
+            <a href="/interview" class="dropdown-item" role="menuitem">
+              <span class="dropdown-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </span>
+              <span class="dropdown-label">
+                <strong>AI-intervjutrener</strong>
+                <span>Øv til jobbintervjuet med stemme</span>
+              </span>
+            </a>
+            <a href="/cv-analyse" class="dropdown-item" role="menuitem">
+              <span class="dropdown-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </span>
+              <span class="dropdown-label">
+                <strong>CV-analyse</strong>
+                <span>Optimaliser CV-en din med AI</span>
+              </span>
+            </a>
+            <a href="/soknadsbrev" class="dropdown-item" role="menuitem">
+              <span class="dropdown-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              </span>
+              <span class="dropdown-label">
+                <strong>Søknadsbrev</strong>
+                <span>Generer profesjonelle brev</span>
+              </span>
+            </a>
+            <a href="/lonnskalkulator" class="dropdown-item" role="menuitem">
+              <span class="dropdown-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </span>
+              <span class="dropdown-label">
+                <strong>Lønnskalkulator</strong>
+                <span>Finn riktig lønn for deg</span>
+              </span>
+            </a>
+            <a href="/bedriftsbibliotek" class="dropdown-item" role="menuitem">
+              <span class="dropdown-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </span>
+              <span class="dropdown-label">
+                <strong>Bedrifter</strong>
+                <span>Utforsk norske arbeidsgivere</span>
+              </span>
+            </a>
+    </div>
+        </div>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="btn btn-ghost">Logg inn</button>
+        <button class="btn btn-primary" id="nav-start-btn">Start gratis</button>
+                          </div>
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-container">
+      <div class="hero-badge">Norges første AI-intervjutrener</div>
+      <h1 class="hero-title">Øv på intervjuet.<br />Få jobben.</h1>
+      <p class="hero-subtitle">
+        Tren på ekte norske jobbintervjuer og få konkret tilbakemelding –
+        slik at du stiller sterkere når det gjelder.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-large" id="cta-start">Start gratis</button>
+        <button class="btn btn-outline btn-large" id="how-it-works-btn">Se hvordan det fungerer</button>
+      </div>
+      <p class="hero-disclaimer">Ingen kredittkort nødvendig</p>
+    </div>
+    <div class="hero-glow"></div>
+  </section>
+
+  <!-- SLIK FUNGERER DET -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="how-container">
+      <h2 class="section-title">Slik fungerer det</h2>
+      <p class="section-subtitle">Tre enkle steg til ditt beste intervju</p>
+
+      <div class="steps-grid">
+
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-emoji">🎯</div>
+          <h3 class="step-title">Velg stilling</h3>
+          <p class="step-desc">Lim inn stillingsbeskrivelsen du søker på, og fortell oss litt om deg selv og ditt erfaringsnivå.</p>
+        </div>
+
+        <div class="step-connector" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-emoji">🎙️</div>
+          <h3 class="step-title">Øv med AI</h3>
+          <p class="step-desc">Gjennomfør et realistisk norsk intervju med stemme. AI-en stiller relevante spørsmål og lytter på svarene dine.</p>
+        </div>
+
+        <div class="step-connector" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-emoji">⭐</div>
+          <h3 class="step-title">Få tilbakemelding</h3>
+          <p class="step-desc">Motta konkret score og personlige tips til forbedring – slik at du vet nøyaktig hva du skal jobbe med.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ALT DU TRENGER -->
+  <section class="features" id="features">
+    <div class="features-container">
+      <h2 class="section-title">Alt du trenger for å lykkes</h2>
+      <p class="section-subtitle">Prepio hjelper deg gjennom hele jobbsøkerprosessen</p>
+
+      <div class="cards-grid">
+
+        <div class="card card-featured" id="card-interview">
+          <div class="card-badge">Mest populær</div>
+          <div class="card-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <h3 class="card-title">AI-intervjutrener</h3>
+          <p class="card-desc">
+            Simuler ekte jobbintervjuer med vår AI. Få umiddelbar tilbakemelding på svarene dine og lær hva arbeidsgivere faktisk ser etter.
+          </p>
+          <ul class="card-features">
+            <li>Bransjespesifikke spørsmål</li>
+            <li>Detaljert tilbakemelding</li>
+            <li>Ubegrenset øving</li>
+          </ul>
+          <button class="card-cta">Prøv nå &rarr;</button>
+        </div>
+
+        <div class="card" id="card-cv">
+          <div class="card-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <h3 class="card-title">CV-analyse</h3>
+          <p class="card-desc">
+            Last opp CV-en din og få en grundig analyse. AI-en identifiserer svakheter og gir konkrete forslag til forbedringer tilpasset stillingen du søker.
+          </p>
+          <ul class="card-features">
+            <li>ATS-optimalisering</li>
+            <li>Tilpasning per stilling</li>
+            <li>Norsk arbeidsmarked</li>
+          </ul>
+          <button class="card-cta">Analyser CV &rarr;</button>
+        </div>
+
+        <div class="card" id="card-letter">
+          <div class="card-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <h3 class="card-title">Søknadsbrev-generator</h3>
+          <p class="card-desc">
+            Generer profesjonelle søknadsbrev på sekunder. Tilpasset stillingen og bedriften – skrevet på norsk og klart til å sende.
+          </p>
+          <ul class="card-features">
+            <li>Skreddersydd per stilling</li>
+            <li>Profesjonell norsk tekst</li>
+            <li>Redigerbart utkast</li>
+          </ul>
+          <button class="card-cta">Generer brev &rarr;</button>
+        </div>
+
+        <div class="card" id="card-salary">
+          <div class="card-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+          <h3 class="card-title">Lønnskalkulator</h3>
+          <p class="card-desc">
+            Finn ut hva du bør kreve og hvordan du forhandler det frem. Basert på stilling, erfaring og norsk markedsdata.
+          </p>
+          <ul class="card-features">
+            <li>Markedsbaserte lønnstall</li>
+            <li>Forhandlingstips</li>
+            <li>Tilpasset din profil</li>
+          </ul>
+          <button class="card-cta">Beregn lønn &rarr;</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials" id="testimonials">
+    <div class="testimonials-container">
+      <h2 class="section-title">Hva brukerne sier</h2>
+      <p class="section-subtitle">Tusenvis av nordmenn har allerede brukt Prepio</p>
+
+      <div class="testimonials-grid">
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars" aria-label="5 av 5 stjerner">⭐⭐⭐⭐⭐</div>
+          <blockquote class="testimonial-quote">
+            "Gjennomførte tre intervjuer med Prepio dagen før det ekte intervjuet. Fikk jobben."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">A</div>
+            <div>
+              <p class="testimonial-name">Anders H.</p>
+              <p class="testimonial-role">Nyutdannet fra NHH</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars" aria-label="5 av 5 stjerner">⭐⭐⭐⭐⭐</div>
+          <blockquote class="testimonial-quote">
+            "Endelig noe som faktisk er på norsk og forstår norsk arbeidskultur. Helt annerledes enn de amerikanske alternativene."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">M</div>
+            <div>
+              <p class="testimonial-name">Marte L.</p>
+              <p class="testimonial-role">Markedskoordinator</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="testimonial-stars" aria-label="5 av 5 stjerner">⭐⭐⭐⭐⭐</div>
+          <blockquote class="testimonial-quote">
+            "Lønnskalkulatoren alene var verdt det. Forhandlet meg til 40 000 kr mer i årslønn."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">T</div>
+            <div>
+              <p class="testimonial-name">Thomas B.</p>
+              <p class="testimonial-role">Konsulent</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <span class="footer-logo">Prepio</span>
+      <span class="footer-copy">&copy; 2026 Prepio. Alle rettigheter forbeholdt.</span>
+    </div>
+  </footer>
+
+  <script src="utils.js"></script>
+  <script src="app.js"></script>
+  <script>
+    // "Se hvordan det fungerer" — scroll ned til steg-seksjonen
+    document.getElementById('how-it-works-btn').addEventListener('click', () => {
+      document.getElementById('how-it-works').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Dropdown-meny — hover og klikk-håndtering
+    const dropdown = document.querySelector('.nav-dropdown');
+    const trigger  = dropdown.querySelector('.nav-dropdown-trigger');
+    const menu     = dropdown.querySelector('.nav-dropdown-menu');
+
+    function openDropdown() {
+      menu.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+    }
+    function closeDropdown() {
+      menu.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    dropdown.addEventListener('mouseenter', openDropdown);
+    dropdown.addEventListener('mouseleave', closeDropdown);
+
+    trigger.addEventListener('click', () => {
+      menu.classList.contains('open') ? closeDropdown() : openDropdown();
+    });
+
+    // Lukk dropdown ved klikk utenfor
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target)) closeDropdown();
+    });
+
+    // Lukk dropdown ved Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDropdown();
+    });
+  </script>
+</body>
+</html>

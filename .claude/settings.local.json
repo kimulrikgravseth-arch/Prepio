@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(node /Users/kimulrikgravseth/Desktop/prepio/server.js)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/interview)",
+      "Bash(xargs kill -9)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/)",
+      "Bash(echo \"/ => $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/interview)",
+      "Bash(echo \"/interview => $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/interview\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/session)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/session)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/priser)",
+      "Bash(echo \"/priser => $\\(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/priser\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const http = require\\('http'\\); http.get\\('http://localhost:3000/bedriftsbibliotek', r => console.log\\('status:', r.statusCode\\)\\);\")",
+      "Bash(mkdir -p /Users/kimulrikgravseth/Desktop/prepio/.claude)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(grep -v '^\\\\s*$' /Users/kimulrikgravseth/Desktop/prepio/.env)",
+      "Bash(node -e \"require\\('./server.js'\\)\")",
+      "Bash(curl -s http://localhost:3001/health)",
+      "Bash(kill %1)",
+      "Bash(node --check /Users/kimulrikgravseth/Desktop/prepio/server.js)",
+      "Bash(node --check /Users/kimulrikgravseth/Desktop/prepio/public/lonnskalkulator.js)",
+      "Bash(npm list *)",
+      "Bash(sed -n '60,80p' /Users/kimulrikgravseth/Desktop/prepio/public/bedriftsbibliotek.html)",
+      "Bash(sed -n '90,105p' /Users/kimulrikgravseth/Desktop/prepio/public/index.html)",
+      "Bash(sed -n '60,72p' /Users/kimulrikgravseth/Desktop/prepio/public/index.html)",
+      "Bash(sed -n '62,74p' /Users/kimulrikgravseth/Desktop/prepio/public/bedriftsbibliotek.html)"
+    ]
+  }
+}

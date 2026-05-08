@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intervju – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="session.css" />
+  <script src="utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+</head>
+<body class="session-page">
+
+  <!-- TOP BAR -->
+  <header class="session-header">
+    <a href="/interview" class="back-link header-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Avslutt
+    </a>
+
+    <div class="session-meta">
+      <span class="session-label">Intervju:</span>
+      <span id="session-title" class="session-info">Laster...</span>
+    </div>
+
+    <div class="session-progress">
+      <span id="question-counter" class="question-counter">Spørsmål 0 / 5</span>
+    </div>
+  </header>
+
+  <!-- CHAT AREA -->
+  <main class="chat-area" id="chat-area">
+    <div class="chat-inner" id="chat-inner">
+      <!-- Messages injected by JS -->
+    </div>
+  </main>
+
+  <!-- MIC SECTION -->
+  <footer class="mic-section" id="mic-section">
+    <p class="mic-status" id="mic-status">Kobler til...</p>
+
+    <div class="hint-box" id="hint-box" hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="hint-text"></span>
+    </div>
+
+    <div class="mic-btn-wrap">
+      <button class="mic-btn mic-disabled" id="mic-btn" disabled aria-label="Trykk for å snakke">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+      <button class="avbryt-btn" id="avbryt-btn" hidden>Avbryt ✕</button>
+    </div>
+
+    <div class="waveform" id="waveform" aria-hidden="true">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </div>
+
+    <button class="hint-btn" id="hint-btn" hidden>Trenger du et hint? 💡</button>
+    <p class="mic-hint" id="mic-hint"></p>
+  </footer>
+
+  <script src="session.js"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lønnskalkulator – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="lonnskalkulator.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="logo">Prepio</a>
+      <nav class="nav-links">
+        <a href="/priser"            class="nav-link">Priser</a>
+        <a href="/cv-analyse"        class="nav-link">CV-analyse</a>
+        <a href="/soknadsbrev"       class="nav-link">Søknadsbrev</a>
+        <a href="/lonnskalkulator"   class="nav-link nav-link-active">Lønnskalkulator</a>
+        <a href="/bedriftsbibliotek" class="nav-link">Bedrifter</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+        <a href="/interview" class="btn btn-primary">Kom i gang</a>
+                        </div>
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+  </nav>
+
+  <div class="lk-wrapper">
+
+    <a href="/" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Tilbake
+    </a>
+
+    <!-- FORM VIEW -->
+    <div id="form-view">
+      <div class="lk-header">
+        <h1 class="lk-title">Lønnskalkulator</h1>
+        <p class="lk-subtitle">Finn ut hva du bør kreve — og hvordan du forhandler det frem</p>
+      </div>
+
+      <div class="lk-card">
+        <div class="form-row">
+          <div class="field-group">
+            <label for="job-title">Stillingstittel</label>
+            <input type="text" id="job-title" placeholder="f.eks. Markedskoordinator" autocomplete="off" maxlength="200" />
+          </div>
+          <div class="field-group">
+            <label for="industry">Bransje</label>
+            <div class="select-wrapper">
+              <select id="industry">
+                <option value="" disabled selected>Velg bransje</option>
+                <option value="Bank og finans">Bank og finans</option>
+                <option value="Teknologi og IT">Teknologi og IT</option>
+                <option value="Markedsføring og kommunikasjon">Markedsføring og kommunikasjon</option>
+                <option value="Helse og omsorg">Helse og omsorg</option>
+                <option value="Offentlig sektor">Offentlig sektor</option>
+                <option value="Handel og service">Handel og service</option>
+                <option value="Bygg og anlegg">Bygg og anlegg</option>
+                <option value="Konsulent">Konsulent</option>
+                <option value="Annet">Annet</option>
+              </select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label for="experience">Erfaringsnivå</label>
+            <div class="select-wrapper">
+              <select id="experience">
+                <option value="" disabled selected>Velg erfaringsnivå</option>
+                <option value="Student / nyutdannet">Student / nyutdannet</option>
+                <option value="1–3 års erfaring">1–3 års erfaring</option>
+                <option value="3–5 års erfaring">3–5 års erfaring</option>
+                <option value="5–10 års erfaring">5–10 års erfaring</option>
+                <option value="10+ års erfaring">10+ års erfaring</option>
+              </select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+          <div class="field-group">
+            <label for="location">Geografi</label>
+            <div class="select-wrapper">
+              <select id="location">
+                <option value="" disabled selected>Velg sted</option>
+                <option value="Oslo">Oslo</option>
+                <option value="Bergen">Bergen</option>
+                <option value="Trondheim">Trondheim</option>
+                <option value="Stavanger">Stavanger</option>
+                <option value="Resten av Norge">Resten av Norge</option>
+              </select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="current-salary">Din nåværende lønn <span class="optional">(valgfritt)</span></label>
+          <input type="number" id="current-salary" placeholder="f.eks. 58000" min="0" max="9999999" />
+        </div>
+
+        <button id="calc-btn" class="btn btn-primary btn-large btn-full" disabled>
+          Beregn lønn →
+        </button>
+      </div>
+    </div>
+
+    <!-- LOADING VIEW -->
+    <div id="loading-view" hidden>
+      <div class="loading-card">
+        <div class="loading-spinner">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <p class="loading-text">Beregner lønnsnivå...</p>
+        <p class="loading-sub">Analyserer norsk arbeidsmarked</p>
+      </div>
+    </div>
+
+    <!-- RESULT VIEW -->
+    <div id="result-view" hidden>
+      <div id="result-content"></div>
+      <div class="result-actions">
+        <button id="reset-btn" class="btn btn-outline btn-large">Beregn på nytt</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <span class="footer-logo">Prepio</span>
+      <span class="footer-copy">&copy; 2026 Prepio. Alle rettigheter forbeholdt.</span>
+    </div>
+  </footer>
+
+  <script src="utils.js"></script>
+  <script src="lonnskalkulator.js"></script>
+</body>
+</html>

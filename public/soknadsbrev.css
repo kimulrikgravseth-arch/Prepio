@@ -1,0 +1,216 @@
+/* ===== SØKNADSBREV PAGE ===== */
+.sb-wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 100px 24px 80px;
+}
+
+/* Header */
+.sb-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.sb-title {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.sb-subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Form card */
+.sb-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+  animation: fadeUp 0.5s ease both;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Fields */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.field-group input,
+.field-group textarea {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #FFFFFF;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  outline: none;
+  resize: none;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+.field-group input::placeholder,
+.field-group textarea::placeholder { color: #9CA3AF; }
+
+.field-group input:hover,
+.field-group textarea:hover { border-color: #9CA3AF; }
+
+.field-group input:focus,
+.field-group textarea:focus {
+  border-color: var(--primary);
+  background: #FFFAF7;
+  box-shadow: 0 0 0 3px rgba(252, 106, 3, 0.1);
+}
+
+.btn-full { width: 100%; justify-content: center; }
+
+#generate-btn:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== LOADING ===== */
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 80px 24px;
+  text-align: center;
+  animation: fadeUp 0.4s ease both;
+}
+
+.loading-spinner {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.loading-spinner .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: bounce 1.2s infinite ease-in-out;
+}
+.loading-spinner .dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-spinner .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.4; }
+  30%            { transform: translateY(-6px); opacity: 1;   }
+}
+
+.loading-text {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.loading-sub {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+/* ===== RESULT ===== */
+.result-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.4s ease both;
+  flex-wrap: wrap;
+}
+
+.result-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.result-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.result-actions-top {
+  flex-shrink: 0;
+}
+
+#copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  padding: 10px 16px;
+}
+
+#copy-btn.copied {
+  border-color: #86EFAC;
+  color: #16A34A;
+  background: #F0FDF4;
+}
+
+/* Letter paper */
+.letter-paper {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 52px;
+  animation: fadeUp 0.4s 0.05s ease both;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+}
+
+.letter-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.97rem;
+  color: var(--text);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.result-actions-bottom {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+  animation: fadeUp 0.4s 0.1s ease both;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .sb-card      { padding: 24px 20px; }
+  .form-row     { grid-template-columns: 1fr; }
+  .letter-paper { padding: 28px 24px; }
+  .result-header { flex-direction: column; }
+}
