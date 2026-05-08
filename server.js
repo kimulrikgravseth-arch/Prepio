@@ -124,6 +124,98 @@ function apiRateLimit(req, res, next) {
 
 app.use('/api', apiRateLimit);
 
+/* ── Concurrency limiter — begrenser samtidige API-kall ─────────────────────
+   Beskytter Claude og ElevenLabs mot overbelastning ved mange samtidige
+   brukere. Køen holder forespørsler i minnet inntil en plass frigjøres.
+   Hvis køen er full returneres 503 umiddelbart.
+   ─────────────────────────────────────────────────────────────────────────── */
+class ConcurrencyLimiter {
+  constructor(max, maxQueue = 20) {
+    this.max      = max;
+    this.maxQueue = maxQueue;
+    this.current  = 0;
+    this.queue    = [];
+  }
+
+  run(fn) {
+    if (this.current < this.max) {
+      return this._exec(fn);
+    }
+    if (this.queue.length >= this.maxQueue) {
+      const err = new Error('Tjenesten er for øyeblikket overbelastet. Prøv igjen om litt.');
+      err.status = 503;
+      return Promise.reject(err);
+    }
+    return new Promise((resolve, reject) => {
+      this.queue.push({ resolve, reject, fn });
+    });
+  }
+
+  async _exec(fn) {
+    this.current++;
+    try {
+      return await fn();
+    } finally {
+      this.current--;
+      if (this.queue.length > 0) {
+        const next = this.queue.shift();
+        this._exec(next.fn).then(next.resolve, next.reject);
+      }
+    }
+  }
+}
+
+// Separate kø per ekstern tjeneste
+const claudeLimiter     = new ConcurrencyLimiter(10, 30); // maks 10 samtidige Claude-kall
+const elevenLabsLimiter = new ConcurrencyLimiter(5,  15); // maks 5 samtidige ElevenLabs-kall
+const whisperLimiter    = new ConcurrencyLimiter(5,  15); // maks 5 samtidige Whisper-kall
+
+/* ── Retry-logikk — prøver automatisk én gang til ved feil ──────────────────
+   Gjelder kun nettverksfeil og 5xx-feil. Klientfeil (4xx) og
+   overbelastning (503) gjentaes aldri.
+   ─────────────────────────────────────────────────────────────────────────── */
+async function withRetry(fn, maxRetries = 1, delayMs = 1200) {
+  let lastErr;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const status = err.status || err.statusCode || (err.response?.status);
+      // Ikke retry klientfeil eller overbelastning
+      if (status >= 400 && status < 500) throw err;
+      if (status === 503)                throw err;
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, delayMs));
+      }
+    }
+  }
+  throw lastErr;
+}
+
+/* ── Fetch med timeout — avbryter kall som tar over 30 sekunder ──────────────
+   Brukes for alle utgående HTTP-kall (ElevenLabs, OpenAI Whisper).
+   ─────────────────────────────────────────────────────────────────────────── */
+const API_TIMEOUT_MS = 30_000;
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      const timeoutErr = new Error('API-kallet tok for lang tid. Prøv igjen.');
+      timeoutErr.status = 504;
+      throw timeoutErr;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+
 // ── Sider ─────────────────────────────────────────────────────────────────────
 app.get('/',                (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/interview',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'interview.html')));
@@ -243,16 +335,25 @@ app.post('/api/interview/start', async (req, res) => {
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 512,
-      system:     buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle }),
-      messages:   [{ role: 'user', content: 'Hei, jeg er klar for intervjuet.' }],
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 512,
+        system:     buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle }),
+        messages:   [{ role: 'user', content: 'Hei, jeg er klar for intervjuet.' }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
     res.json({ message: response.content[0].text });
   } catch (err) {
+    const status = err.status || 500;
     logError('interview/start', err);
-    res.status(500).json({ error: 'Klarte ikke starte intervjuet. Sjekk internettforbindelsen og prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503
+        ? err.message
+        : status === 504
+          ? 'Intervjuet tok for lang tid å starte. Prøv igjen.'
+          : 'Klarte ikke starte intervjuet. Sjekk internettforbindelsen og prøv igjen.',
+    });
   }
 });
 
@@ -265,16 +366,25 @@ app.post('/api/interview/message', async (req, res) => {
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 512,
-      system:     buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle }),
-      messages,
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 512,
+        system:     buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle }),
+        messages,
+      }, { timeout: API_TIMEOUT_MS }))
+    );
     res.json({ message: response.content[0].text });
   } catch (err) {
+    const status = err.status || 500;
     logError('interview/message', err);
-    res.status(500).json({ error: 'Klarte ikke hente neste spørsmål. Sjekk internettforbindelsen og prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503
+        ? err.message
+        : status === 504
+          ? 'Svaret tok for lang tid. Prøv igjen.'
+          : 'Klarte ikke hente neste spørsmål. Sjekk internettforbindelsen og prøv igjen.',
+    });
   }
 });
 
@@ -302,12 +412,14 @@ Vær konkret og spesifikk – referer gjerne til ting kandidaten faktisk sa. Bru
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system:     feedbackSystem,
-      messages:   [...messages, { role: 'user', content: 'Gi meg den strukturerte tilbakemeldingen nå.' }],
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system:     feedbackSystem,
+        messages:   [...messages, { role: 'user', content: 'Gi meg den strukturerte tilbakemeldingen nå.' }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
 
     const text      = response.content[0].text.trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -315,8 +427,11 @@ Vær konkret og spesifikk – referer gjerne til ting kandidaten faktisk sa. Bru
 
     res.json(JSON.parse(jsonMatch[0]));
   } catch (err) {
+    const status = err.status || 500;
     logError('interview/feedback', err);
-    res.status(500).json({ error: 'Klarte ikke generere tilbakemelding. Prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503 ? err.message : 'Klarte ikke generere tilbakemelding. Prøv igjen.',
+    });
   }
 });
 
@@ -329,22 +444,27 @@ app.post('/api/interview/hint', async (req, res) => {
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 150,
-      system:     buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle }),
-      messages:   [
-        ...messages,
-        {
-          role:    'user',
-          content: 'Brukeren trenger et hint. Gi et kort tips på 1-2 setninger om hvordan de kan svare på det siste spørsmålet, uten å gi bort svaret. Vær konkret og norsk i tonen. Svar kun med selve hintet, ingen innledning.',
-        },
-      ],
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 150,
+        system:     buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle }),
+        messages:   [
+          ...messages,
+          {
+            role:    'user',
+            content: 'Brukeren trenger et hint. Gi et kort tips på 1-2 setninger om hvordan de kan svare på det siste spørsmålet, uten å gi bort svaret. Vær konkret og norsk i tonen. Svar kun med selve hintet, ingen innledning.',
+          },
+        ],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
     res.json({ hint: response.content[0].text.trim() });
   } catch (err) {
+    const status = err.status || 500;
     logError('interview/hint', err);
-    res.status(500).json({ error: 'Klarte ikke generere hint. Prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503 ? err.message : 'Klarte ikke generere hint. Prøv igjen.',
+    });
   }
 });
 
@@ -401,15 +521,17 @@ Vær konkret med tall basert på oppdatert kunnskap om norsk lønnsnivå. Snakk 
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system:     systemPrompt,
-      messages: [{
-        role:    'user',
-        content: `Stilling: ${jobTitle}\nBransje: ${industry}\nErfaring: ${experience}\nGeografi: ${location}${currentSalary ? `\nNåværende lønn: ${currentSalary} kr/mnd` : ''}`,
-      }],
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system:     systemPrompt,
+        messages: [{
+          role:    'user',
+          content: `Stilling: ${jobTitle}\nBransje: ${industry}\nErfaring: ${experience}\nGeografi: ${location}${currentSalary ? `\nNåværende lønn: ${currentSalary} kr/mnd` : ''}`,
+        }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
 
     const text      = response.content[0].text.trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -417,8 +539,13 @@ Vær konkret med tall basert på oppdatert kunnskap om norsk lønnsnivå. Snakk 
 
     res.json(JSON.parse(jsonMatch[0]));
   } catch (err) {
+    const status = err.status || 500;
     logError('lonnskalkulator', err);
-    res.status(500).json({ error: 'Klarte ikke beregne lønn. Sjekk internettforbindelsen og prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503 ? err.message
+           : status === 504 ? 'Beregningen tok for lang tid. Prøv igjen.'
+           : 'Klarte ikke beregne lønn. Sjekk internettforbindelsen og prøv igjen.',
+    });
   }
 });
 
@@ -449,19 +576,26 @@ Format: Kun selve brevteksten, klar til å sende. Ingen ekstra kommentarer eller
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system:     systemPrompt,
-      messages: [{
-        role:    'user',
-        content: `Navn: ${name}\nStilling: ${jobTitle}\nBedrift: ${company}\n\nStilingsbeskrivelse:\n${jobDescription}\n\nOm søkeren:\n${about}`,
-      }],
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system:     systemPrompt,
+        messages: [{
+          role:    'user',
+          content: `Navn: ${name}\nStilling: ${jobTitle}\nBedrift: ${company}\n\nStilingsbeskrivelse:\n${jobDescription}\n\nOm søkeren:\n${about}`,
+        }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
     res.json({ letter: response.content[0].text.trim() });
   } catch (err) {
+    const status = err.status || 500;
     logError('soknadsbrev', err);
-    res.status(500).json({ error: 'Klarte ikke generere søknadsbrev. Sjekk internettforbindelsen og prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503 ? err.message
+           : status === 504 ? 'Genereringen tok for lang tid. Prøv igjen.'
+           : 'Klarte ikke generere søknadsbrev. Sjekk internettforbindelsen og prøv igjen.',
+    });
   }
 });
 
@@ -513,15 +647,17 @@ Vær direkte, konkret og jordnær. Referer til faktisk innhold fra CV-en. Snakk 
 
   try {
     const client   = new Anthropic();
-    const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system:     systemPrompt,
-      messages: [{
-        role:    'user',
-        content: `Stilling: ${jobTitle}\n\nStilingsbeskrivelse:\n${jobDescription || 'Ikke oppgitt'}\n\nCV:\n${cvText.slice(0, 12000)}`,
-      }],
-    });
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system:     systemPrompt,
+        messages: [{
+          role:    'user',
+          content: `Stilling: ${jobTitle}\n\nStilingsbeskrivelse:\n${jobDescription || 'Ikke oppgitt'}\n\nCV:\n${cvText.slice(0, 12000)}`,
+        }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
 
     const text      = response.content[0].text.trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -529,8 +665,13 @@ Vær direkte, konkret og jordnær. Referer til faktisk innhold fra CV-en. Snakk 
 
     res.json(JSON.parse(jsonMatch[0]));
   } catch (err) {
+    const status = err.status || 500;
     logError('cv-analyse', err);
-    res.status(500).json({ error: 'Klarte ikke analysere CV-en. Sjekk internettforbindelsen og prøv igjen.' });
+    res.status(status === 503 ? 503 : 500).json({
+      error: status === 503 ? err.message
+           : status === 504 ? 'Analysen tok for lang tid. Prøv igjen.'
+           : 'Klarte ikke analysere CV-en. Sjekk internettforbindelsen og prøv igjen.',
+    });
   }
 });
 
@@ -545,24 +686,25 @@ app.post('/api/tts', async (req, res) => {
   const voiceId = process.env.ELEVENLABS_VOICE_ID || 'ErXwobaYiN019PkySvjV';
 
   try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key':   process.env.ELEVENLABS_API_KEY || '',
-          'Content-Type': 'application/json',
-          'Accept':       'audio/mpeg',
-        },
-        body: JSON.stringify({
-          text,
-          model_id:      'eleven_turbo_v2_5',
-          language_code: 'no',
-          voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-        }),
-      }
+    const response = await elevenLabsLimiter.run(() =>
+      withRetry(() => fetchWithTimeout(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key':   process.env.ELEVENLABS_API_KEY || '',
+            'Content-Type': 'application/json',
+            'Accept':       'audio/mpeg',
+          },
+          body: JSON.stringify({
+            text,
+            model_id:      'eleven_turbo_v2_5',
+            language_code: 'no',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        }
+      ))
     );
-
 
     if (!response.ok) {
       const errBody = await response.text();
@@ -575,8 +717,13 @@ app.post('/api/tts', async (req, res) => {
     res.set('Content-Type', 'audio/mpeg');
     res.send(audioBuffer);
   } catch (err) {
+    const status = err.status || 500;
     logError('TTS:fetch', err);
-    res.status(500).json({ error: 'Talesyntese feilet. Sjekk internettforbindelsen.' });
+    res.status(status === 503 ? 503 : status === 504 ? 504 : 500).json({
+      error: status === 503 ? err.message
+           : status === 504 ? 'Talesyntese tok for lang tid. Prøv igjen.'
+           : 'Talesyntese feilet. Sjekk internettforbindelsen.',
+    });
   }
 });
 
@@ -597,12 +744,13 @@ app.post('/api/stt', audioUpload.single('audio'), async (req, res) => {
     formData.append('model',    'whisper-1');
     formData.append('language', 'no');
 
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method:  'POST',
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY || ''}` },
-      body:    formData,
-    });
-
+    const response = await whisperLimiter.run(() =>
+      withRetry(() => fetchWithTimeout('https://api.openai.com/v1/audio/transcriptions', {
+        method:  'POST',
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY || ''}` },
+        body:    formData,
+      }))
+    );
 
     if (!response.ok) {
       const errBody = await response.text();
@@ -611,10 +759,15 @@ app.post('/api/stt', audioUpload.single('audio'), async (req, res) => {
     }
 
     const data = await response.json();
-        res.json({ transcript: data.text });
+    res.json({ transcript: data.text });
   } catch (err) {
+    const status = err.status || 500;
     logError('STT:fetch', err);
-    res.status(500).json({ error: 'Transkripsjon feilet. Sjekk internettforbindelsen.' });
+    res.status(status === 503 ? 503 : status === 504 ? 504 : 500).json({
+      error: status === 503 ? err.message
+           : status === 504 ? 'Transkripsjon tok for lang tid. Prøv igjen.'
+           : 'Transkripsjon feilet. Sjekk internettforbindelsen.',
+    });
   }
 });
 
