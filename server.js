@@ -733,9 +733,11 @@ app.post('/api/tts', async (req, res) => {
     console.log(`[TTS] ← ElevenLabs svarte: HTTP ${response.status} | Content-Type: ${contentType} | ${elapsed}ms`);
 
     if (!response.ok) {
-      const errBody = await response.text();
-      console.log('[TTS] ✗ ElevenLabs feil-body:', errBody.slice(0, 400));
-      logError('TTS:ElevenLabs', errBody);
+      console.log('[TTS] ElevenLabs status:', response.status);
+      console.log('[TTS] ElevenLabs headers:', Object.fromEntries(response.headers.entries()));
+      const errorBody = await response.text();
+      console.log('[TTS] ElevenLabs error body:', errorBody);
+      logError('TTS:ElevenLabs', errorBody);
       return res.status(502).json({ error: 'Talesyntese feilet. Prøv igjen.' });
     }
 
