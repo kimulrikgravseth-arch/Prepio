@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     'card-interview': '/interview',
     'card-cv':        '/cv-analyse',
     'card-letter':    '/soknadsbrev',
+    'card-arena':     '/ovingsarena',
   };
   const cardToasts = {};
 

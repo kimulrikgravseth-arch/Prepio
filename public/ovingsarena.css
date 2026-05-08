@@ -1,0 +1,224 @@
+/* ===== ØVINGSARENA PAGE ===== */
+.arena-page {
+  min-height: 100vh;
+  background: var(--bg-subtle);
+  padding: 48px 24px 80px;
+}
+
+.arena-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.arena-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.arena-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #FC6A03, #E55F00);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 50px;
+  margin-bottom: 16px;
+}
+
+.arena-title {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+  margin-bottom: 12px;
+  line-height: 1.15;
+}
+
+.arena-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ── Kort-grid ── */
+.arena-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.arena-card {
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  padding: 32px 28px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  user-select: none;
+  animation: fadeUp 0.45s ease both;
+}
+
+.arena-card:nth-child(2) { animation-delay: 0.05s; }
+.arena-card:nth-child(3) { animation-delay: 0.10s; }
+.arena-card:nth-child(4) { animation-delay: 0.15s; }
+
+.arena-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(252, 106, 3, 0.12);
+}
+
+.arena-card:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.arena-card.active {
+  border-color: var(--primary);
+  background: #FFF8F4;
+  box-shadow: 0 4px 20px rgba(252, 106, 3, 0.15);
+}
+
+.arena-icon {
+  font-size: 44px;
+  display: block;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.arena-card h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+
+.arena-card p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Skjema ── */
+.arena-form {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  animation: fadeUp 0.4s ease both;
+}
+
+.arena-form[hidden] { display: none; }
+
+.form-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 28px;
+  letter-spacing: -0.3px;
+}
+
+.arena-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+/* Reuse interview.css field-group styles via style.css vars */
+.arena-form .field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.arena-form .field-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+
+.arena-form input,
+.arena-form .select-wrapper select {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm, 10px);
+  padding: 13px 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.arena-form .select-wrapper select {
+  padding-right: 44px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.arena-form input::placeholder { color: #9CA3AF; }
+
+.arena-form input:focus,
+.arena-form .select-wrapper select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(252, 106, 3, 0.1);
+  background: #FFFAF7;
+}
+
+.arena-form .select-wrapper {
+  position: relative;
+}
+
+.arena-form .select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: transform 0.2s;
+}
+
+.arena-form .select-wrapper select:focus + .select-arrow {
+  transform: translateY(-50%) rotate(180deg);
+  color: var(--primary);
+}
+
+#start-arena-btn {
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
+  font-size: 1rem;
+  padding: 16px;
+}
+
+#start-arena-btn:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Responsiv ── */
+@media (max-width: 640px) {
+  .arena-page { padding: 32px 16px 60px; }
+  .arena-cards { grid-template-columns: 1fr; }
+  .arena-form { padding: 28px 20px; }
+  .arena-form-row { grid-template-columns: 1fr; }
+}

@@ -225,6 +225,7 @@ app.get('/lonnskalkulator', (req, res) => res.sendFile(path.join(__dirname, 'pub
 app.get('/soknadsbrev',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'soknadsbrev.html')));
 app.get('/cv-analyse',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'cv-analyse.html')));
 app.get('/priser',          (req, res) => res.sendFile(path.join(__dirname, 'public', 'priser.html')));
+app.get('/ovingsarena',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'ovingsarena.html')));
 
 // ── Input-validering ──────────────────────────────────────────────────────────
 
@@ -479,6 +480,133 @@ app.post('/api/interview/hint', async (req, res) => {
     res.status(status === 503 ? 503 : 500).json({
       error: status === 503 ? err.message : 'Klarte ikke generere hint. Prøv igjen.',
     });
+  }
+});
+
+// ── Øvingsarena: system-prompt builder ───────────────────────────────────────
+const DIFFICULTY_MAP = {
+  Lett: {
+    salg:        'Du er åpen og interessert. Still enkle spørsmål og la deg overbevise relativt raskt.',
+    pitching:    'Du er nysgjerrig og støttende. Still åpne spørsmål og gi oppmuntring.',
+    forhandling: 'Du gir deg etter 1–2 gode argumenter.',
+    kunde:       'Du er rimelig og forståelsesfull. Lar deg løse problemet.',
+  },
+  Middels: {
+    salg:        'Du er litt skeptisk. Krev 2–3 gode argumenter før du vurderer kjøp.',
+    pitching:    'Du er kritisk men fair. Fokuser på marked, konkurrenter og forretningsmodell.',
+    forhandling: 'Du krever 2–3 solide argumenter. Gi deg gradvis.',
+    kunde:       'Du er frustrert men lyttende. Krev konkrete løsninger.',
+  },
+  Krevende: {
+    salg:        'Du er svært skeptisk. Pruter på pris, stiller tøffe spørsmål. La deg ikke overbevise lett.',
+    pitching:    'Du er meget kritisk. Krev solide svar på økonomi, team og exit-strategi.',
+    forhandling: 'Du holder hardt på posisjonen din. Gi deg kun ved eksepsjonelle argumenter.',
+    kunde:       'Du er svært oppgitt. Truer med media og anmeldelse. Krev umiddelbar løsning.',
+  },
+};
+
+function buildArenaPrompt(type, topic, opponent, difficulty) {
+  const diff = DIFFICULTY_MAP[difficulty] || DIFFICULTY_MAP['Middels'];
+
+  const prompts = {
+    salg: `Du er en norsk kunde som vurderer å kjøpe: ${topic}.
+Du spiller rollen som: ${opponent}.
+${diff.salg}
+Still ETT naturlig norsk spørsmål om gangen. Ikke gi lange svar.
+Etter nøyaktig 5 utvekslinger avslutter du rollen og gir strukturert tilbakemelding:
+TILBAKEMELDING:
+- Hva fungerte bra (2–3 punkter)
+- Hva kunne vært bedre (2–3 punkter)
+- Score: X/10
+- Ett konkret tips til neste salgssamtale
+Svar alltid på norsk. Bryt aldri rollen før etter 5 utvekslinger.`,
+
+    pitching: `Du er en erfaren ${opponent} som lytter til en pitch om: ${topic}.
+${diff.pitching}
+Still ETT kritisk spørsmål om gangen. Fokuser på: marked, konkurrenter, forretningsmodell, team, økonomi.
+Etter nøyaktig 5 utvekslinger avslutter du rollen og gir investorfeedback:
+INVESTORFEEDBACK:
+- Hva var sterkt i pitchen (2–3 punkter)
+- Hva må forbedres (2–3 punkter)
+- Ville du investert? Hvorfor/hvorfor ikke?
+- Score: X/10
+Svar alltid på norsk. Bryt aldri rollen før etter 5 utvekslinger.`,
+
+    forhandling: `Du er en ${opponent} i en forhandling om: ${topic}.
+${diff.forhandling}
+Start med en tydelig posisjon. Forhandle realistisk og naturlig.
+Still ETT motspørsmål eller kom med ETT motargument om gangen.
+Etter nøyaktig 5 utvekslinger avslutter du rollen og oppsummerer:
+FORHANDLINGSOPPSUMMERING:
+- Hvem fikk best deal og hvorfor
+- Hvilke argumenter fungerte best
+- 3 konkrete forhandlingstips
+- Score: X/10
+Svar alltid på norsk. Bryt aldri rollen før etter 5 utvekslinger.`,
+
+    kunde: `Du er en ${opponent} med et problem knyttet til: ${topic}.
+${diff.kunde}
+Presenter problemet tydelig. Reager naturlig på svarene du får.
+Etter nøyaktig 5 utvekslinger avslutter du rollen og gir tilbakemelding:
+KUNDEBEHANDLING TILBAKEMELDING:
+- Hva ble håndtert bra (2–3 punkter)
+- Hva kunne vært bedre (2–3 punkter)
+- Ble du fornøyd som kunde? Hvorfor/hvorfor ikke?
+- Score: X/10
+Svar alltid på norsk. Bryt aldri rollen før etter 5 utvekslinger.`,
+  };
+
+  return prompts[type] || prompts['salg'];
+}
+
+// ── API: Øvingsarena — start økt ─────────────────────────────────────────────
+app.post('/api/arena/start', async (req, res) => {
+  const { type, topic, opponent, difficulty } = req.body;
+  if (!type || !topic) return res.status(400).json({ error: 'type og topic er påkrevd.' });
+
+  const typeErr = validateText(topic, 'Topic', 300);
+  if (typeErr) return res.status(400).json({ error: typeErr });
+
+  try {
+    const client   = new Anthropic();
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 512,
+        system:     buildArenaPrompt(type, topic, opponent || '', difficulty || 'Middels'),
+        messages:   [{ role: 'user', content: 'Hei, jeg er klar. La oss begynne.' }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
+    res.json({ message: response.content[0].text });
+  } catch (err) {
+    logError('arena/start', err);
+    res.status(500).json({ error: 'Klarte ikke starte øvingsarenaen. Prøv igjen.' });
+  }
+});
+
+// ── API: Øvingsarena — neste melding ─────────────────────────────────────────
+app.post('/api/arena/message', async (req, res) => {
+  const { type, topic, opponent, difficulty, messages, messageCount } = req.body;
+  if (!type || !topic) return res.status(400).json({ error: 'type og topic er påkrevd.' });
+
+  const histErr = validateHistory(messages);
+  if (histErr) return res.status(400).json({ error: histErr });
+
+  try {
+    const client   = new Anthropic();
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 512,
+        system:     buildArenaPrompt(type, topic, opponent || '', difficulty || 'Middels'),
+        messages,
+      }, { timeout: API_TIMEOUT_MS }))
+    );
+    const isComplete = (messageCount || 0) >= 5;
+    res.json({ message: response.content[0].text, isComplete });
+  } catch (err) {
+    logError('arena/message', err);
+    res.status(500).json({ error: 'Klarte ikke hente svar. Prøv igjen.' });
   }
 });
 

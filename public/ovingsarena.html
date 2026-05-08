@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Øvingsarena – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="ovingsarena.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="/" class="logo">Prepio</a>
+      <div class="nav-actions">
+        <a href="/interview" class="btn btn-primary">Start gratis</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SLIDE-IN MENY FRA VENSTRE -->
+  <div class="nav-overlay" id="nav-overlay"></div>
+  <aside class="nav-panel" id="nav-panel" aria-hidden="true">
+    <div class="nav-panel-header">
+      <a href="/" class="logo">Prepio</a>
+      <button class="nav-panel-close" id="nav-panel-close" aria-label="Lukk meny">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-panel-links">
+      <a href="/priser"            class="nav-panel-link">Priser</a>
+      <a href="/interview"         class="nav-panel-link">AI-intervju <kbd class="nav-shortkey">I</kbd></a>
+      <a href="/ovingsarena"       class="nav-panel-link">Øvingsarena <span class="nav-badge">Pro</span></a>
+      <a href="/cv-analyse"        class="nav-panel-link">CV-analyse</a>
+      <a href="/soknadsbrev"       class="nav-panel-link">Søknadsbrev</a>
+      <a href="/lonnskalkulator"   class="nav-panel-link">Lønnskalkulator</a>
+      <a href="/bedriftsbibliotek" class="nav-panel-link">Bedriftsbibliotek</a>
+      <button class="nav-panel-link nav-panel-btn" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+    </nav>
+    <div class="nav-panel-footer">
+      <a href="/interview" class="btn btn-primary btn-large btn-full">Start gratis →</a>
+    </div>
+  </aside>
+
+  <!-- INNHOLD -->
+  <main class="arena-page">
+    <div class="arena-container">
+
+      <div class="arena-header">
+        <div class="arena-badge">Pro</div>
+        <h1 class="arena-title">Øvingsarena</h1>
+        <p class="arena-subtitle">Tren på virkelige samtaler — bli bedre på salg, pitching og forhandling</p>
+      </div>
+
+      <!-- KORT -->
+      <div class="arena-cards" id="arena-cards">
+
+        <div class="arena-card" data-type="salg" tabindex="0" role="button" aria-pressed="false">
+          <span class="arena-icon">🛒</span>
+          <h3>Salgsøving</h3>
+          <p>Øv på å selge et produkt eller tjeneste til en realistisk norsk kunde</p>
+        </div>
+
+        <div class="arena-card" data-type="pitching" tabindex="0" role="button" aria-pressed="false">
+          <span class="arena-icon">🚀</span>
+          <h3>Pitching</h3>
+          <p>Øv på å pitche ideen eller bedriften din til en investor</p>
+        </div>
+
+        <div class="arena-card" data-type="forhandling" tabindex="0" role="button" aria-pressed="false">
+          <span class="arena-icon">💰</span>
+          <h3>Forhandling</h3>
+          <p>Øv på å forhandle pris, kontrakt eller betingelser</p>
+        </div>
+
+        <div class="arena-card" data-type="kunde" tabindex="0" role="button" aria-pressed="false">
+          <span class="arena-icon">🤝</span>
+          <h3>Kundesamtaler</h3>
+          <p>Øv på vanskelige kundesamtaler og klagebehandling</p>
+        </div>
+
+      </div>
+
+      <!-- SKJEMA (skjult til kort er valgt) -->
+      <div class="arena-form" id="arena-form" hidden>
+
+        <h3 class="form-title" id="form-title">Sett opp din økt</h3>
+
+        <div class="field-group">
+          <label for="arena-topic">Hva handler det om?</label>
+          <input
+            type="text"
+            id="arena-topic"
+            maxlength="200"
+            autocomplete="off"
+            placeholder=""
+          />
+        </div>
+
+        <div class="arena-form-row">
+          <div class="field-group">
+            <label for="arena-opponent">Hvem er motparten?</label>
+            <div class="select-wrapper">
+              <select id="arena-opponent"></select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="arena-difficulty">Vanskelighetsgrad</label>
+            <div class="select-wrapper">
+              <select id="arena-difficulty">
+                <option value="Lett">Lett</option>
+                <option value="Middels" selected>Middels</option>
+                <option value="Krevende">Krevende</option>
+              </select>
+              <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <button id="start-arena-btn" class="btn btn-primary btn-large btn-full" disabled>
+          Start øving →
+        </button>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="utils.js"></script>
+  <script src="ovingsarena.js"></script>
+</body>
+</html>

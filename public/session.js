@@ -28,6 +28,19 @@ let _micBtnHandler   = null;
 let _avbrytHandler   = null;
 let _hintHandler     = null;
 
+/* ── Arena-modus ─────────────────────────────────────────────────────────────
+   Dersom URL inneholder ?mode=arena brukes /api/arena/* i stedet for
+   /api/interview/*. All lyd, mikrofon og chat-logikk er identisk.
+   ─────────────────────────────────────────────────────────────────────────── */
+const _urlParams    = new URLSearchParams(window.location.search);
+const IS_ARENA      = _urlParams.get('mode') === 'arena';
+const arenaData     = IS_ARENA ? {
+  type:       _urlParams.get('type')       || 'salg',
+  topic:      _urlParams.get('topic')      || '',
+  opponent:   _urlParams.get('opponent')   || '',
+  difficulty: _urlParams.get('difficulty') || 'Middels',
+} : null;
+
 /* ── Hjelper ──────────────────────────────────────────────────────────────── */
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -121,9 +134,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  document.getElementById('session-title').textContent = interviewData.company
-    ? `${interviewData.jobTitle} hos ${interviewData.company}`
-    : interviewData.jobTitle;
+  if (IS_ARENA) {
+    const typeLabels = { salg: 'Salgsøving', pitching: 'Pitching', forhandling: 'Forhandling', kunde: 'Kundesamtale' };
+    document.getElementById('session-title').textContent =
+      `${typeLabels[arenaData.type] || 'Øving'}: ${arenaData.topic}`;
+  } else {
+    document.getElementById('session-title').textContent = interviewData.company
+      ? `${interviewData.jobTitle} hos ${interviewData.company}`
+      : interviewData.jobTitle;
+  }
 
   // Koble lydtest-knappen (fungerer også FØR start-overlay-klikk)
   const testBtn = document.getElementById('tts-test-btn');
@@ -148,7 +167,8 @@ async function beginSession() {
   console.log('[Audio] AudioContext låst opp:', audioCtx.state);
 
   await requestMic();
-  startInterview();
+  if (IS_ARENA) startArena();
+  else          startInterview();
 }
 
 /* ── AudioContext-oppretting ved mikrofon-trykk ──────────────────────────── */
@@ -540,6 +560,37 @@ async function startInterview() {
   }
 }
 
+/* ── Arena-modus: start økt ───────────────────────────────────────────────── */
+async function startArena() {
+  setVoiceState('idle');
+  showTyping();
+
+  try {
+    const res  = await fetch('/api/arena/start', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(arenaData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Ukjent feil');
+
+    history.push({ role: 'user',      content: 'Hei, jeg er klar. La oss begynne.' });
+    history.push({ role: 'assistant', content: data.message });
+
+    removeTyping();
+    appendBubble('ai', data.message);
+    questionCount = 1;
+    updateCounter();
+
+    setupMicButton();
+    await playTTS(data.message);
+  } catch (err) {
+    removeTyping();
+    appendBubble('ai', `Feil: ${err.message}`);
+    setVoiceState('ready');
+  }
+}
+
 async function sendMessage(userText) {
   history.push({ role: 'user', content: userText });
   appendBubble('user', userText);
@@ -551,7 +602,32 @@ async function sendMessage(userText) {
   const isFinalQuestion = questionCount >= 5;
 
   try {
-    if (isFinalQuestion) {
+    if (IS_ARENA) {
+      // ── Arena-modus ──────────────────────────────────────────────────────
+      const res  = await fetch('/api/arena/message', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ ...arenaData, messages: history, messageCount: questionCount }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Ukjent feil');
+
+      history.push({ role: 'assistant', content: data.message });
+      removeTyping();
+      appendBubble('ai', data.message);
+
+      await playTTS(data.message);
+
+      if (data.isComplete) {
+        finishInterview();
+      } else {
+        questionCount++;
+        updateCounter();
+        resetHint();
+      }
+
+    } else if (isFinalQuestion) {
+      // ── Intervju-modus, siste spørsmål ───────────────────────────────────
       const msgRes  = await fetch('/api/interview/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -580,6 +656,7 @@ async function sendMessage(userText) {
       finishInterview();
 
     } else {
+      // ── Intervju-modus, neste spørsmål ───────────────────────────────────
       const res  = await fetch('/api/interview/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
