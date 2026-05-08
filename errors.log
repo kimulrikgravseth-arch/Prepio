@@ -1,0 +1,16 @@
+[2026-05-08T10:33:24.022Z] [interview/start] Error: Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+    at Anthropic.validateHeaders (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:306:15)
+    at Anthropic.buildHeaders (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:735:14)
+    at async Anthropic.buildRequest (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:697:28)
+    at async Anthropic.makeRequest (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:451:39)
+    at async withRetry (/Users/kimulrikgravseth/Desktop/prepio/server.js:181:14)
+    at async ConcurrencyLimiter._exec (/Users/kimulrikgravseth/Desktop/prepio/server.js:157:14)
+    at async /Users/kimulrikgravseth/Desktop/prepio/server.js:352:22
+[2026-05-08T17:12:20.480Z] [arena/start] Error: Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set. Or for one of the "X-Api-Key" or "Authorization" headers to be explicitly omitted
+    at Anthropic.validateHeaders (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:306:15)
+    at Anthropic.buildHeaders (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:735:14)
+    at async Anthropic.buildRequest (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:697:28)
+    at async Anthropic.makeRequest (/Users/kimulrikgravseth/Desktop/prepio/node_modules/@anthropic-ai/sdk/client.js:451:39)
+    at async withRetry (/Users/kimulrikgravseth/Desktop/prepio/server.js:181:14)
+    at async ConcurrencyLimiter._exec (/Users/kimulrikgravseth/Desktop/prepio/server.js:157:14)
+    at async /Users/kimulrikgravseth/Desktop/prepio/server.js:572:22
