@@ -201,6 +201,23 @@ function setupNavbarShadow() {
   }, { passive: true });
 }
 
+/* ── Tastatursnarveier ───────────────────────────────────────
+   Globale snarveier som virker på alle sider.
+   Aktiveres ikke når bruker skriver i et inputfelt.
+   ─────────────────────────────────────────────────────────── */
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', function(e) {
+    // Ikke aktiver snarvei hvis bruker er i et input/textarea/select
+    var tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    if (e.key === 'i' || e.key === 'I') {
+      window.location.href = '/interview';
+    }
+  });
+}
+
 /* ── Auto-initialisering ─────────────────────────────────────
    Kjøres på alle sider automatisk ved DOMContentLoaded.
    ─────────────────────────────────────────────────────────── */
@@ -208,4 +225,5 @@ document.addEventListener('DOMContentLoaded', () => {
   setupNavbarShadow();
   setupHamburger();
   setupBackToTop();
+  setupKeyboardShortcuts();
 });
