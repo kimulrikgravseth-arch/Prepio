@@ -4,18 +4,19 @@ let history        = [];
 let questionCount  = 0;
 let isDone         = false;
 
-// Stemmetilstand: 'idle' | 'ai_speaking' | 'ready' | 'recording' | 'processing'
+// Stemmetilstand: 'idle' | 'ready' | 'recording' | 'processing'
 let voiceState       = 'idle';
 let mediaRecorder    = null;
 let audioChunks      = [];
 let recordStart      = 0;
 let micStream        = null;
 
-// Lydavspilling
-let audioCtx         = null;
-let currentAudioSrc  = null;   // aktiv BufferSource — kan stoppes
+// TTS — HTMLAudioElement (Safari-kompatibelt)
+let currentAudio     = null;   // aktiv Audio-element — kan stoppes
+let pendingAudioUrl  = null;   // blob URL klar til avspilling
 
-// Visualiserer
+// Visualiserer (AudioContext kun for bølgeform under opptak)
+let audioCtx         = null;
 let analyser         = null;
 let analyserSrc      = null;
 let animFrameId      = null;
@@ -105,12 +106,6 @@ function updateMicUI() {
       setStatus('Kobler til...');
       hint.textContent = '';
       break;
-    case 'ai_speaking':
-      btn.className += ' mic-ai-speaking';
-      btn.disabled   = true;
-      setStatus('Intervjueren snakker...');
-      hint.textContent = '';
-      break;
     case 'ready':
       btn.className += ' mic-ready';
       btn.disabled   = false;
@@ -131,14 +126,7 @@ function updateMicUI() {
       break;
   }
 
-  // Avbryt-knapp: synlig kun når AI snakker
-  if (avbrytBtn) {
-    if (voiceState === 'ai_speaking') {
-      avbrytBtn.removeAttribute('hidden');
-    } else {
-      avbrytBtn.setAttribute('hidden', '');
-    }
-  }
+  // Avbryt-knapp styres direkte av playPendingAudio(), ikke av voiceState
 
   // Hint-knapp: kun synlig når klar og hint ikke brukt for dette spørsmålet
   const hintBtn = document.getElementById('hint-btn');
@@ -157,20 +145,28 @@ function setupMicButton() {
   const avbrytBtn = document.getElementById('avbryt-btn');
   const hintBtn   = document.getElementById('hint-btn');
 
+  const listenBtn = document.getElementById('listen-btn');
+
   // Lagre referanser for opprydding i finishInterview()
   _micBtnHandler = () => {
     unlockAudio();
-    if (voiceState === 'ready')     startRecording();
+    // Hopp over ventende lyd hvis bruker velger å svare direkte
+    if (pendingAudioUrl) {
+      URL.revokeObjectURL(pendingAudioUrl);
+      pendingAudioUrl = null;
+    }
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    hideListenBtn();
+    if (voiceState === 'ready')          startRecording();
     else if (voiceState === 'recording') stopRecording();
   };
 
   _avbrytHandler = () => {
     // Stopp pågående TTS-avspilling
-    if (currentAudioSrc) {
-      try { currentAudioSrc.stop(); } catch {}
-      currentAudioSrc = null;
-    }
-    // playTTS() vil løse opp via onended og kalle setVoiceState('ready')
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    if (pendingAudioUrl) { URL.revokeObjectURL(pendingAudioUrl); pendingAudioUrl = null; }
+    hideListenBtn();
+    avbrytBtn.setAttribute('hidden', '');
   };
 
   _hintHandler = fetchHint;
@@ -178,6 +174,7 @@ function setupMicButton() {
   btn.addEventListener('click', _micBtnHandler);
   avbrytBtn.addEventListener('click', _avbrytHandler);
   hintBtn.addEventListener('click', _hintHandler);
+  if (listenBtn) listenBtn.addEventListener('click', playPendingAudio);
 }
 
 /* ── Hint ─────────────────────────────────────────────────────────────────── */
@@ -204,7 +201,7 @@ async function fetchHint() {
     if (!res.ok) throw new Error(data.error || 'Klarte ikke hente hint');
 
     hintText.textContent = data.hint;
-    await playTTS(data.hint);
+    prepareTTS(data.hint);
   } catch (err) {
     console.error('[Hint] Feil:', err);
 
@@ -368,16 +365,38 @@ function stripMarkdown(text) {
     .trim();
 }
 
-async function playTTS(text) {
+/* ── Listen-knapp hjelpere ────────────────────────────────────────────────── */
+function showListenBtn(state) {
+  const btn = document.getElementById('listen-btn');
+  if (!btn) return;
+  btn.removeAttribute('hidden');
+  if (state === 'loading') {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="opacity:.5">⏳ Laster lyd...</span>';
+  } else if (state === 'ready') {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Hør spørsmålet';
+  } else if (state === 'playing') {
+    btn.disabled = true;
+    btn.innerHTML = '🔊 Spiller av...';
+  }
+}
+
+function hideListenBtn() {
+  const btn = document.getElementById('listen-btn');
+  if (btn) btn.setAttribute('hidden', '');
+}
+
+/* ── Hent lyd fra ElevenLabs og gjør klar (ikke spill av ennå) ──────────── */
+async function prepareTTS(text) {
   const cleanText = stripMarkdown(text);
   if (!cleanText) return;
 
-  setVoiceState('ai_speaking');
+  // Rydd opp forrige ventende lyd
+  if (pendingAudioUrl) { URL.revokeObjectURL(pendingAudioUrl); pendingAudioUrl = null; }
 
-  // Naturlig pause før ElevenLabs kalles
-  await delay(500);
-
-  console.log('[TTS] Ber om lyd, lengde:', cleanText.length);
+  showListenBtn('loading');
+  console.log('[TTS] Henter lyd, lengde:', cleanText.length);
 
   try {
     const res = await fetch('/api/tts', {
@@ -386,45 +405,48 @@ async function playTTS(text) {
       body:    JSON.stringify({ text: cleanText }),
     });
 
-    console.log('[TTS] Status:', res.status, '| Content-Type:', res.headers.get('content-type'));
-
     if (!res.ok) {
-      console.warn('[TTS] API-feil:', await res.text());
-      if (!isDone) setVoiceState('ready');
+      console.warn('[TTS] API-feil:', res.status);
+      hideListenBtn();
       return;
     }
 
-    const arrayBuffer = await res.arrayBuffer();
-    console.log('[TTS] Buffer mottatt, bytes:', arrayBuffer.byteLength);
-
-    // Opprett AudioContext hvis det ikke finnes (bør allerede eksistere)
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
-
-    const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
-    console.log('[TTS] Dekodert, varighet:', decoded.duration.toFixed(1) + 's');
-
-    // Spill av og vent til ferdig (eller avbrutt av bruker)
-    await new Promise((resolve) => {
-      const source = audioCtx.createBufferSource();
-      source.buffer = decoded;
-      source.connect(audioCtx.destination);
-      currentAudioSrc = source;
-
-      source.onended = () => {
-        currentAudioSrc = null;
-        console.log('[TTS] Avspilling ferdig');
-        resolve();
-      };
-      source.start(0);
-    });
+    const blob = await res.blob();
+    pendingAudioUrl = URL.createObjectURL(blob);
+    console.log('[TTS] Blob klar, bytes:', blob.size);
+    showListenBtn('ready');
 
   } catch (err) {
-    console.error('[TTS] Feil:', err.name, err.message);
-    // Fortsett selv om TTS feiler — brukeren kan likevel lese meldingen
+    console.error('[TTS] Feil ved henting:', err.message);
+    hideListenBtn();
   }
+}
 
-  if (!isDone) setVoiceState('ready');
+/* ── Spill av lyd ved direkte brukertrykk (Safari-kompatibelt) ───────────── */
+async function playPendingAudio() {
+  if (!pendingAudioUrl) return;
+
+  const url = pendingAudioUrl;
+  pendingAudioUrl = null;
+
+  showListenBtn('playing');
+  const avbrytBtn = document.getElementById('avbryt-btn');
+  if (avbrytBtn) avbrytBtn.removeAttribute('hidden');
+
+  currentAudio = new Audio(url);
+  currentAudio.playsinline = true;
+  currentAudio.setAttribute('playsinline', '');
+
+  await new Promise((resolve) => {
+    currentAudio.onended = () => { console.log('[TTS] Avspilling ferdig'); resolve(); };
+    currentAudio.onerror = (e) => { console.error('[TTS] Avspilling feilet:', e); resolve(); };
+    currentAudio.play().catch((err) => { console.error('[TTS] play() nektet:', err); resolve(); });
+  });
+
+  currentAudio = null;
+  URL.revokeObjectURL(url);
+  hideListenBtn();
+  if (avbrytBtn) avbrytBtn.setAttribute('hidden', '');
 }
 
 /* ── API-kall ─────────────────────────────────────────────────────────────── */
@@ -451,7 +473,8 @@ async function startInterview() {
     updateCounter();
 
     setupMicButton();
-    await playTTS(data.message);
+    setVoiceState('ready');
+    prepareTTS(data.message);
   } catch (err) {
     removeTyping();
     const online = navigator.onLine;
@@ -488,8 +511,7 @@ async function sendMessage(userText) {
       history.push({ role: 'assistant', content: msgData.message });
       removeTyping();
       appendBubble('ai', msgData.message);
-
-      await playTTS(msgData.message);
+      prepareTTS(msgData.message);
 
       // Generer tilbakemeldingskort
       showTyping();
@@ -521,8 +543,8 @@ async function sendMessage(userText) {
       questionCount++;
       updateCounter();
       resetHint(); // nytt spørsmål — hint tilgjengelig igjen
-
-      await playTTS(data.message);
+      setVoiceState('ready');
+      prepareTTS(data.message);
     }
   } catch (err) {
     removeTyping();
@@ -678,7 +700,12 @@ function finishInterview() {
     micSection.style.border  = 'none';
   }
 
-  // Stopp mikrofon-tracks og lukk AudioContext
+  // Stopp eventuell TTS-avspilling og rydd opp blob-URLer
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (pendingAudioUrl) { URL.revokeObjectURL(pendingAudioUrl); pendingAudioUrl = null; }
+  hideListenBtn();
+
+  // Stopp mikrofon-tracks og lukk AudioContext (bølgeform-visualiserer)
   if (micStream) micStream.getTracks().forEach(t => t.stop());
   if (audioCtx)  audioCtx.close();
 }

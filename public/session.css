@@ -256,6 +256,34 @@
 }
 
 /* ── Hint button ── */
+/* ── Hør spørsmålet-knapp ── */
+.listen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 50px;
+  background: rgba(252, 106, 3, 0.15);
+  color: #FC6A03;
+  border: 1.5px solid rgba(252, 106, 3, 0.35);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  margin-bottom: 14px;
+}
+.listen-btn:not(:disabled):hover {
+  background: rgba(252, 106, 3, 0.25);
+  border-color: rgba(252, 106, 3, 0.6);
+  transform: translateY(-1px);
+}
+.listen-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.listen-btn[hidden] { display: none; }
+
 .hint-btn {
   background: none;
   border: none;
