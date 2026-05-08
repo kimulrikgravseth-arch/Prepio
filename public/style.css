@@ -54,11 +54,11 @@ body {
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
   height: 64px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
 }
 
 .logo {
@@ -78,9 +78,6 @@ body {
 }
 
 .nav-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
   margin-left: auto;
 }
 
@@ -742,58 +739,46 @@ body {
   transform-origin: center;
 }
 
-/* Animerer til X når åpen */
-.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* ===== SLIDE-IN MENY FRA VENSTRE ===== */
+/* ===== SLIDE-IN MENY ===== */
 
-/* Mørk overlay bak panelet */
 .nav-overlay {
+  display: none;
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 200;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
+  z-index: 999;
 }
 
 .nav-overlay.open {
-  opacity: 1;
-  pointer-events: all;
+  display: block;
 }
 
-/* Hvit panel som glir inn fra venstre */
 .nav-panel {
   position: fixed;
   top: 0;
   left: 0;
-  height: 100%;
-  width: 320px;
-  background: #fff;
-  z-index: 201;
-  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.18);
+  width: 300px;
+  height: 100vh;
+  background: #ffffff;
+  z-index: 1000;
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.15);
 }
 
 .nav-panel.open {
   transform: translateX(0);
 }
 
-/* Header i panelet: logo + X-knapp */
 .nav-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .nav-panel-header .logo {
@@ -809,17 +794,15 @@ body {
   border: none;
   background: none;
   cursor: pointer;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  transition: background var(--transition), color var(--transition);
+  color: #6b7280;
+  border-radius: 6px;
 }
 
 .nav-panel-close:hover {
-  background: var(--bg-subtle);
-  color: var(--text);
+  background: #f3f4f6;
+  color: #111827;
 }
 
-/* Navigasjonslenker i panelet */
 .nav-panel-links {
   flex: 1;
   padding: 12px 0;
@@ -829,44 +812,35 @@ body {
 .nav-panel-link {
   display: block;
   width: 100%;
-  padding: 14px 28px;
+  padding: 16px 24px;
   font-size: 1.05rem;
   font-weight: 500;
-  color: var(--text);
+  color: #111827;
   text-decoration: none;
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: color 0.15s ease, background 0.15s ease;
-  border-left: 3px solid transparent;
 }
 
 .nav-panel-link:hover {
-  color: var(--orange, #FC6A03);
   background: #fff8f5;
+  color: #FC6A03;
 }
 
 .nav-panel-link.active {
-  color: var(--orange, #FC6A03);
-  border-left-color: var(--orange, #FC6A03);
+  color: #FC6A03;
   font-weight: 600;
 }
 
-/* Bunn av panelet: "Start gratis"-knapp */
 .nav-panel-footer {
   padding: 20px 24px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
+  border-top: 1px solid #e5e7eb;
 }
 
-/* Forhindre scrolling når panelet er åpent */
-body.menu-open { overflow: hidden; }
-
-/* Mobilversjon: smalere panel */
-@media (max-width: 640px) {
-  .nav-panel { width: 280px; }
+body.menu-open {
+  overflow: hidden;
 }
 
 /* ===== TILBAKE-TIL-TOPPEN-KNAPP ===== */

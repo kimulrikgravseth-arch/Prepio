@@ -152,53 +152,42 @@ function setupBackToTop() {
    Fungerer på alle skjermstørrelser.
    ─────────────────────────────────────────────────────────── */
 function setupHamburger() {
-  const hamburger = document.querySelector('.nav-hamburger');
-  const panel     = document.getElementById('nav-panel');
-  const overlay   = document.getElementById('nav-overlay');
-  const closeBtn  = document.getElementById('nav-panel-close');
+  var hamburger = document.querySelector('.nav-hamburger');
+  var panel     = document.getElementById('nav-panel');
+  var overlay   = document.getElementById('nav-overlay');
+  var closeBtn  = document.getElementById('nav-panel-close');
+
   if (!hamburger || !panel) return;
 
-  // Marker aktiv lenke basert på URL
-  const path = window.location.pathname.replace(/\/$/, '');
-  panel.querySelectorAll('a.nav-panel-link').forEach(a => {
-    const href = a.getAttribute('href').replace(/\/$/, '');
-    if (href && path === href) a.classList.add('active');
-  });
-
-  const open = () => {
+  function openMenu() {
     panel.classList.add('open');
-    overlay?.classList.add('open');
-    panel.setAttribute('aria-hidden', 'false');
-    hamburger.setAttribute('aria-expanded', 'true');
-    hamburger.classList.add('open');
+    if (overlay) overlay.classList.add('open');
     document.body.classList.add('menu-open');
-    closeBtn?.focus();
-  };
+    hamburger.setAttribute('aria-expanded', 'true');
+  }
 
-  const close = () => {
+  function closeMenu() {
     panel.classList.remove('open');
-    overlay?.classList.remove('open');
-    panel.setAttribute('aria-hidden', 'true');
-    hamburger.setAttribute('aria-expanded', 'false');
-    hamburger.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
     document.body.classList.remove('menu-open');
-  };
+    hamburger.setAttribute('aria-expanded', 'false');
+  }
 
-  hamburger.addEventListener('click', () => {
-    panel.classList.contains('open') ? close() : open();
+  hamburger.addEventListener('click', openMenu);
+  if (overlay) overlay.addEventListener('click', closeMenu);
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMenu();
+  });
+  panel.querySelectorAll('a').forEach(function(a) {
+    a.addEventListener('click', closeMenu);
   });
 
-  // Lukk ved klikk på overlay
-  overlay?.addEventListener('click', close);
-
-  // Lukk ved X-knapp
-  closeBtn?.addEventListener('click', close);
-
-  // Lukk ved Escape
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
-
-  // Lukk ved klikk på lenke i panelet
-  panel.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+  // Marker aktiv lenke basert på URL
+  var path = window.location.pathname;
+  panel.querySelectorAll('a.nav-panel-link').forEach(function(a) {
+    if (a.getAttribute('href') === path) a.classList.add('active');
+  });
 }
 
 /* ── Navbar-skygge ved scrolling ─────────────────────────────
@@ -212,32 +201,11 @@ function setupNavbarShadow() {
   }, { passive: true });
 }
 
-/* ── Dropdown-meny (Verktøy) ─────────────────────────────────
-   Håndterer hover + klikk + tastatur for Verktøy-dropdownen.
-   ─────────────────────────────────────────────────────────── */
-function setupDropdown() {
-  const dropdown = document.querySelector('.nav-dropdown');
-  if (!dropdown) return;
-  const trigger = dropdown.querySelector('.nav-dropdown-trigger');
-  const menu    = dropdown.querySelector('.nav-dropdown-menu');
-  if (!trigger || !menu) return;
-
-  const open  = () => { menu.classList.add('open'); trigger.setAttribute('aria-expanded', 'true'); };
-  const close = () => { menu.classList.remove('open'); trigger.setAttribute('aria-expanded', 'false'); };
-
-  dropdown.addEventListener('mouseenter', open);
-  dropdown.addEventListener('mouseleave', close);
-  trigger.addEventListener('click', () => menu.classList.contains('open') ? close() : open());
-  document.addEventListener('click', (e) => { if (!dropdown.contains(e.target)) close(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
-}
-
 /* ── Auto-initialisering ─────────────────────────────────────
    Kjøres på alle sider automatisk ved DOMContentLoaded.
    ─────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   setupNavbarShadow();
   setupHamburger();
-  setupDropdown();
   setupBackToTop();
 });
