@@ -80,6 +80,39 @@
   line-height: 1.5;
 }
 
+/* ── TTS debug-banner ── */
+.tts-test-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: rgba(252, 106, 3, 0.08);
+  border-bottom: 1px solid rgba(252, 106, 3, 0.2);
+}
+.tts-test-btn {
+  background: rgba(252, 106, 3, 0.15);
+  border: 1px solid rgba(252, 106, 3, 0.4);
+  color: #FC6A03;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.tts-test-btn:hover  { background: rgba(252, 106, 3, 0.25); }
+.tts-test-btn:disabled { opacity: 0.5; cursor: default; }
+.tts-test-status {
+  font-size: 0.78rem;
+  color: #8DA3BE;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.tts-test-status.ok  { color: #4ADE80; }
+.tts-test-status.err { color: #F87171; }
+
 /* ── Header ── */
 .session-header {
   flex-shrink: 0;

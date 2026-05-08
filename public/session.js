@@ -31,6 +31,84 @@ let _hintHandler     = null;
 /* ── Hjelper ──────────────────────────────────────────────────────────────── */
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+/* ── TTS-lydtest (debug) ──────────────────────────────────────────────────── */
+async function testTTS() {
+  const btn    = document.getElementById('tts-test-btn');
+  const status = document.getElementById('tts-test-status');
+  if (!btn || !status) return;
+
+  btn.disabled = true;
+  status.className = 'tts-test-status';
+
+  // Sørg for at AudioContext er låst opp (krever at beginSession() er kjørt)
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    console.log('[TEST-TTS] Gjenopptar AudioContext...');
+    await audioCtx.resume();
+  }
+  console.log('[TEST-TTS] AudioContext state:', audioCtx.state);
+
+  status.textContent = 'Henter lyd fra ElevenLabs...';
+  console.log('[TEST-TTS] → Kaller /api/tts...');
+
+  try {
+    const t0  = Date.now();
+    const res = await fetch('/api/tts', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ text: 'Hei, dette er en test av lydsystemet.' }),
+    });
+
+    const elapsed     = Date.now() - t0;
+    const contentType = res.headers.get('content-type') || '(ingen)';
+    console.log(`[TEST-TTS] ← Svar: HTTP ${res.status} | Content-Type: ${contentType} | ${elapsed}ms`);
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[TEST-TTS] ✗ Feil fra server:', errText);
+      status.textContent = `Feil fra server: HTTP ${res.status} — ${errText}`;
+      status.className   = 'tts-test-status err';
+      btn.disabled = false;
+      return;
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    console.log(`[TEST-TTS] ✓ Mottatt ${arrayBuffer.byteLength} bytes, Content-Type: ${contentType}`);
+
+    status.textContent = `Lyd mottatt (${arrayBuffer.byteLength} bytes), spiller av...`;
+
+    try {
+      const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+      console.log('[TEST-TTS] ✓ Dekodert, varighet:', decoded.duration.toFixed(2) + 's');
+
+      await new Promise((resolve) => {
+        const source = audioCtx.createBufferSource();
+        source.buffer = decoded;
+        source.connect(audioCtx.destination);
+        source.onended = resolve;
+        source.start(0);
+      });
+
+      console.log('[TEST-TTS] ✓ Avspilling ferdig!');
+      status.textContent = 'Lyd ferdig! ✓';
+      status.className   = 'tts-test-status ok';
+    } catch (decodeErr) {
+      console.error('[TEST-TTS] ✗ Dekoding/avspilling feilet:', decodeErr.name, decodeErr.message);
+      status.textContent = `Dekoding feilet: ${decodeErr.name} — ${decodeErr.message}`;
+      status.className   = 'tts-test-status err';
+    }
+
+  } catch (fetchErr) {
+    console.error('[TEST-TTS] ✗ Fetch feilet:', fetchErr.name, fetchErr.message);
+    status.textContent = `Nettverksfeil: ${fetchErr.message}`;
+    status.className   = 'tts-test-status err';
+  }
+
+  btn.disabled = false;
+}
+
 /* ── Init ─────────────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const raw = sessionStorage.getItem('prepioInterview');
@@ -46,6 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('session-title').textContent = interviewData.company
     ? `${interviewData.jobTitle} hos ${interviewData.company}`
     : interviewData.jobTitle;
+
+  // Koble lydtest-knappen (fungerer også FØR start-overlay-klikk)
+  const testBtn = document.getElementById('tts-test-btn');
+  if (testBtn) testBtn.addEventListener('click', testTTS);
 
   // Vis start-overlay — bruker må trykke én gang for å låse opp lyd (Safari/iOS)
   const overlay = document.getElementById('start-overlay');
@@ -373,30 +455,35 @@ async function playTTS(text) {
   setVoiceState('ai_speaking');
   await delay(500);
 
-  console.log('[TTS] Ber om lyd, lengde:', cleanText.length);
+  console.log('[TTS] → Ber om lyd, tekstlengde:', cleanText.length);
 
   try {
+    const t0  = Date.now();
     const res = await fetch('/api/tts', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ text: cleanText }),
     });
 
-    console.log('[TTS] Status:', res.status);
+    const elapsed     = Date.now() - t0;
+    const contentType = res.headers.get('content-type') || '(ingen)';
+    console.log(`[TTS] ← Svar: HTTP ${res.status} | Content-Type: ${contentType} | ${elapsed}ms`);
 
     if (!res.ok) {
-      console.warn('[TTS] API-feil:', res.status);
+      const errText = await res.text();
+      console.error('[TTS] ✗ Feil fra server:', errText);
       if (!isDone) setVoiceState('ready');
       return;
     }
 
     const arrayBuffer = await res.arrayBuffer();
-    console.log('[TTS] Buffer mottatt, bytes:', arrayBuffer.byteLength);
+    console.log(`[TTS] ✓ Mottatt ${arrayBuffer.byteLength} bytes`);
 
+    console.log('[TTS] AudioContext state:', audioCtx?.state);
     if (audioCtx.state === 'suspended') await audioCtx.resume();
 
     const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
-    console.log('[TTS] Dekodert, varighet:', decoded.duration.toFixed(1) + 's');
+    console.log('[TTS] ✓ Dekodert, varighet:', decoded.duration.toFixed(2) + 's — starter avspilling');
 
     await new Promise((resolve) => {
       const source = audioCtx.createBufferSource();
@@ -406,14 +493,14 @@ async function playTTS(text) {
 
       source.onended = () => {
         currentAudioSrc = null;
-        console.log('[TTS] Avspilling ferdig');
+        console.log('[TTS] ✓ Avspilling ferdig');
         resolve();
       };
       source.start(0);
     });
 
   } catch (err) {
-    console.error('[TTS] Feil:', err.name, err.message);
+    console.error('[TTS] ✗ Feil:', err.name, err.message);
   }
 
   if (!isDone) setVoiceState('ready');

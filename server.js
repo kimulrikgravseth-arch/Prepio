@@ -692,14 +692,22 @@ Vær direkte, konkret og jordnær. Referer til faktisk innhold fra CV-en. Snakk 
 // ── API: TTS — ElevenLabs ─────────────────────────────────────────────────────
 app.post('/api/tts', async (req, res) => {
   const { text } = req.body;
+  console.log('[TTS] ▶ Mottatt request, tekstlengde:', text?.length ?? 0);
 
-  // API-nøkler forblir alltid på server-siden — sendes aldri til frontend
   const err = validateText(text, 'Tekst', 1500);
-  if (err) return res.status(400).json({ error: err });
+  if (err) {
+    console.log('[TTS] ✗ Validering feilet:', err);
+    return res.status(400).json({ error: err });
+  }
 
   const voiceId = process.env.ELEVENLABS_VOICE_ID || 'ErXwobaYiN019PkySvjV';
+  const hasKey  = !!process.env.ELEVENLABS_API_KEY;
+  console.log('[TTS] Voice ID:', voiceId, '| API-nøkkel satt:', hasKey);
 
   try {
+    console.log('[TTS] → Sender til ElevenLabs...');
+    const t0 = Date.now();
+
     const response = await elevenLabsLimiter.run(() =>
       withRetry(() => fetchWithTimeout(
         `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
@@ -720,18 +728,26 @@ app.post('/api/tts', async (req, res) => {
       ))
     );
 
+    const elapsed     = Date.now() - t0;
+    const contentType = response.headers.get('content-type') || '(ingen)';
+    console.log(`[TTS] ← ElevenLabs svarte: HTTP ${response.status} | Content-Type: ${contentType} | ${elapsed}ms`);
+
     if (!response.ok) {
       const errBody = await response.text();
+      console.log('[TTS] ✗ ElevenLabs feil-body:', errBody.slice(0, 400));
       logError('TTS:ElevenLabs', errBody);
       return res.status(502).json({ error: 'Talesyntese feilet. Prøv igjen.' });
     }
 
-    // Lyd returneres direkte — aldri lagret på disk
     const audioBuffer = Buffer.from(await response.arrayBuffer());
+    console.log(`[TTS] ✓ Lyd klar: ${audioBuffer.length} bytes, sender til frontend`);
+
     res.set('Content-Type', 'audio/mpeg');
     res.send(audioBuffer);
+    console.log('[TTS] ✓ Response sendt');
   } catch (err) {
     const status = err.status || 500;
+    console.log('[TTS] ✗ Exception:', err.name, err.message);
     logError('TTS:fetch', err);
     res.status(status === 503 ? 503 : status === 504 ? 504 : 500).json({
       error: status === 503 ? err.message
