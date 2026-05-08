@@ -81,6 +81,13 @@
   letter-spacing: 0.2px;
 }
 
+.label-optional {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-muted, #9ca3af);
+  margin-left: 4px;
+}
+
 /* Inputs & textarea */
 .field-group input,
 .field-group textarea {

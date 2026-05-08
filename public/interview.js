@@ -15,28 +15,25 @@ document.addEventListener('DOMContentLoaded', () => {
     company.focus();
   }
 
-  // style has a default so it's not required for validation
-  const fields = [title, company, desc, exp];
+  // Kun stillingstittel og erfaringsnivå er påkrevd
+  const requiredFields = [title, exp];
+  const allFields      = [title, company, desc, exp];
 
   function isFilled(el) {
     return el.value.trim() !== '' && !(el.tagName === 'SELECT' && el.value === '');
   }
 
-  function allFilled() {
-    return fields.every(isFilled);
-  }
-
   function updateButton() {
-    btn.disabled = !allFilled();
+    btn.disabled = !requiredFields.every(isFilled);
   }
 
-  fields.forEach(el => {
+  allFields.forEach(el => {
     el.addEventListener('input', updateButton);
     el.addEventListener('change', updateButton);
   });
 
-  // Remove invalid styling on interaction
-  fields.forEach(el => {
+  // Fjern invalid-styling når bruker samhandler med feltet
+  allFields.forEach(el => {
     el.addEventListener('focus', () => {
       el.classList.remove('invalid');
       el.closest('.select-wrapper')?.classList.remove('invalid');
@@ -46,9 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', e => {
     e.preventDefault();
 
-    // Mark any empty fields
+    // Marker tomme påkrevde felt
     let valid = true;
-    fields.forEach(el => {
+    requiredFields.forEach(el => {
       if (!isFilled(el)) {
         valid = false;
         if (el.tagName === 'SELECT') {

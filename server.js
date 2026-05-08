@@ -276,16 +276,26 @@ const VALID_EXP    = new Set(Object.keys(EXP_LABELS));
  * Både /api/interview/start, /api/interview/message og /api/interview/hint bruker denne.
  */
 function buildSystemPrompt({ jobTitle, company, description, experience, interviewStyle = 'standard' }) {
-  const style  = VALID_STYLES.has(interviewStyle) ? interviewStyle : 'standard';
-  const expKey = VALID_EXP.has(experience) ? experience : null;
+  const style      = VALID_STYLES.has(interviewStyle) ? interviewStyle : 'standard';
+  const expKey     = VALID_EXP.has(experience) ? experience : null;
+  const hasCompany = company && company.trim();
+  const hasDesc    = description && description.trim();
+
+  // Bygg kontekst-setning tilpasset hva som er oppgitt
+  const kontekst = hasCompany
+    ? `Du gjennomfører et realistisk jobbintervju for stillingen ${jobTitle} hos ${hasCompany}.`
+    : `Du gjennomfører et realistisk jobbintervju for stillingen ${jobTitle}. Bedriftsnavn er ikke oppgitt — unngå å nevne det.`;
+
+  const beskrivelseSeksjon = hasDesc
+    ? `Stillingsbeskrivelse:\n${hasDesc}`
+    : `Stillingsbeskrivelse: Ikke oppgitt. Still generelle spørsmål som passer for en ${jobTitle} med ${expKey ? EXP_LABELS[expKey] : experience}.`;
 
   return `${STYLE_PROMPTS[style]}
 
-Du gjennomfører et realistisk jobbintervju for stillingen ${jobTitle} hos ${company}.
+${kontekst}
 Kandidaten har: ${expKey ? EXP_LABELS[expKey] : experience}.
 
-Stillingsbeskrivelse:
-${description}
+${beskrivelseSeksjon}
 
 Norsk arbeidskultur du skal reflektere:
 - Flat struktur og likeverd — ikke autoritær eller nedlatende
@@ -325,13 +335,17 @@ Snakk alltid norsk.`;
 app.post('/api/interview/start', async (req, res) => {
   const { jobTitle, company, description, experience, interviewStyle } = req.body;
 
-  // Valider alle påkrevde felt
+  // Kun stillingstittel og erfaringsnivå er påkrevd
   const err =
-    validateText(jobTitle,     'Stillingstittel', 200)   ||
-    validateText(company,      'Bedriftsnavn',    200)    ||
-    validateText(description,  'Stillingsbeskrivelse', 8000) ||
+    validateText(jobTitle, 'Stillingstittel', 200) ||
     (!experience ? 'Erfaringsnivå mangler.' : null);
   if (err) return res.status(400).json({ error: err });
+
+  // Valgfrie felt — valider kun lengde hvis de er oppgitt
+  if (company && company.length > 200)
+    return res.status(400).json({ error: 'Bedriftsnavn er for langt (maks 200 tegn).' });
+  if (description && description.length > 8000)
+    return res.status(400).json({ error: 'Stillingsbeskrivelse er for lang (maks 8000 tegn).' });
 
   try {
     const client   = new Anthropic();
