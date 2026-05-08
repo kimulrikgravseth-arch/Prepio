@@ -4,19 +4,18 @@ let history        = [];
 let questionCount  = 0;
 let isDone         = false;
 
-// Stemmetilstand: 'idle' | 'ready' | 'recording' | 'processing'
+// Stemmetilstand: 'idle' | 'ai_speaking' | 'ready' | 'recording' | 'processing'
 let voiceState       = 'idle';
 let mediaRecorder    = null;
 let audioChunks      = [];
 let recordStart      = 0;
 let micStream        = null;
 
-// TTS — HTMLAudioElement (Safari-kompatibelt)
-let currentAudio     = null;   // aktiv Audio-element — kan stoppes
-let pendingAudioUrl  = null;   // blob URL klar til avspilling
-
-// Visualiserer (AudioContext kun for bølgeform under opptak)
+// Lydavspilling (Web Audio API — låses opp én gang via start-knapp)
 let audioCtx         = null;
+let currentAudioSrc  = null;   // aktiv BufferSource — kan stoppes
+
+// Visualiserer
 let analyser         = null;
 let analyserSrc      = null;
 let animFrameId      = null;
@@ -33,15 +32,13 @@ let _hintHandler     = null;
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 /* ── Init ─────────────────────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', async () => {
-  // Hent intervju-data fra sessionStorage — redirect hvis ingenting er lagret
+document.addEventListener('DOMContentLoaded', () => {
   const raw = sessionStorage.getItem('prepioInterview');
   if (!raw) { window.location.href = '/interview'; return; }
 
   try {
     interviewData = JSON.parse(raw);
   } catch {
-    // Ugyldig JSON — send tilbake til intervju-skjemaet
     window.location.href = '/interview';
     return;
   }
@@ -50,17 +47,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     ? `${interviewData.jobTitle} hos ${interviewData.company}`
     : interviewData.jobTitle;
 
-  await requestMic();
-  startInterview();
+  // Vis start-overlay — bruker må trykke én gang for å låse opp lyd (Safari/iOS)
+  const overlay = document.getElementById('start-overlay');
+  if (overlay) overlay.removeAttribute('hidden');
+
+  const startBtn = document.getElementById('start-session-btn');
+  if (startBtn) startBtn.addEventListener('click', beginSession);
 });
 
-/* ── AudioContext ─────────────────────────────────────────────────────────── */
-// Oppretter/gjenoppretter AudioContext ved brukerinteraksjon (krav i nettlesere)
+/* ── Start-sesjonen (én brukerhandling låser opp lyd for hele sesjonen) ──── */
+async function beginSession() {
+  const overlay = document.getElementById('start-overlay');
+  if (overlay) overlay.setAttribute('hidden', '');
+
+  // Opprett og start AudioContext i dette brukertrykket — Safari godtar det
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  console.log('[Audio] AudioContext låst opp:', audioCtx.state);
+
+  await requestMic();
+  startInterview();
+}
+
+/* ── AudioContext-oppretting ved mikrofon-trykk ──────────────────────────── */
 function unlockAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    console.log('[Audio] AudioContext opprettet, tilstand:', audioCtx.state);
-  }
+  if (!audioCtx) return;
   if (audioCtx.state === 'suspended') {
     audioCtx.resume().then(() => console.log('[Audio] AudioContext gjenopptatt'));
   }
@@ -106,6 +117,12 @@ function updateMicUI() {
       setStatus('Kobler til...');
       hint.textContent = '';
       break;
+    case 'ai_speaking':
+      btn.className += ' mic-ai-speaking';
+      btn.disabled   = true;
+      setStatus('Intervjueren snakker...');
+      hint.textContent = '';
+      break;
     case 'ready':
       btn.className += ' mic-ready';
       btn.disabled   = false;
@@ -126,7 +143,14 @@ function updateMicUI() {
       break;
   }
 
-  // Avbryt-knapp styres direkte av playPendingAudio(), ikke av voiceState
+  // Avbryt-knapp: synlig kun når AI snakker
+  if (avbrytBtn) {
+    if (voiceState === 'ai_speaking') {
+      avbrytBtn.removeAttribute('hidden');
+    } else {
+      avbrytBtn.setAttribute('hidden', '');
+    }
+  }
 
   // Hint-knapp: kun synlig når klar og hint ikke brukt for dette spørsmålet
   const hintBtn = document.getElementById('hint-btn');
@@ -145,28 +169,18 @@ function setupMicButton() {
   const avbrytBtn = document.getElementById('avbryt-btn');
   const hintBtn   = document.getElementById('hint-btn');
 
-  const listenBtn = document.getElementById('listen-btn');
-
-  // Lagre referanser for opprydding i finishInterview()
   _micBtnHandler = () => {
     unlockAudio();
-    // Hopp over ventende lyd hvis bruker velger å svare direkte
-    if (pendingAudioUrl) {
-      URL.revokeObjectURL(pendingAudioUrl);
-      pendingAudioUrl = null;
-    }
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    hideListenBtn();
     if (voiceState === 'ready')          startRecording();
     else if (voiceState === 'recording') stopRecording();
   };
 
   _avbrytHandler = () => {
-    // Stopp pågående TTS-avspilling
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    if (pendingAudioUrl) { URL.revokeObjectURL(pendingAudioUrl); pendingAudioUrl = null; }
-    hideListenBtn();
-    avbrytBtn.setAttribute('hidden', '');
+    if (currentAudioSrc) {
+      try { currentAudioSrc.stop(); } catch {}
+      currentAudioSrc = null;
+    }
+    // playTTS() løser opp via onended og kaller setVoiceState('ready')
   };
 
   _hintHandler = fetchHint;
@@ -174,12 +188,10 @@ function setupMicButton() {
   btn.addEventListener('click', _micBtnHandler);
   avbrytBtn.addEventListener('click', _avbrytHandler);
   hintBtn.addEventListener('click', _hintHandler);
-  if (listenBtn) listenBtn.addEventListener('click', playPendingAudio);
 }
 
 /* ── Hint ─────────────────────────────────────────────────────────────────── */
 async function fetchHint() {
-  // Merk hint som brukt og skjul knappen umiddelbart
   hintUsed = true;
   updateMicUI();
 
@@ -189,7 +201,7 @@ async function fetchHint() {
   hintBox.removeAttribute('hidden');
   hintText.textContent = 'Henter hint...';
 
-  setVoiceState('idle'); // deaktiver mic mens hint hentes
+  setVoiceState('idle');
 
   try {
     const res  = await fetch('/api/interview/hint', {
@@ -201,29 +213,24 @@ async function fetchHint() {
     if (!res.ok) throw new Error(data.error || 'Klarte ikke hente hint');
 
     hintText.textContent = data.hint;
-    prepareTTS(data.hint);
+    await playTTS(data.hint);
   } catch (err) {
     console.error('[Hint] Feil:', err);
-
     const online = navigator.onLine;
     hintText.textContent = online
       ? 'Klarte ikke hente hint. Prøv igjen.'
       : 'Ingen internettforbindelse. Sjekk tilkoblingen din.';
-
-    // Tillat nytt forsøk ved å nullstille hintUsed
     hintUsed = false;
     setVoiceState('ready');
   }
 }
 
-// Tilbakestill hint-tilstand for hvert nye spørsmål
 function resetHint() {
   hintUsed = false;
   const hintBox = document.getElementById('hint-box');
   if (hintBox) hintBox.setAttribute('hidden', '');
   const hintText = document.getElementById('hint-text');
   if (hintText) hintText.textContent = '';
-  // updateMicUI() vil vise hint-btn igjen når tilstanden går til 'ready'
 }
 
 /* ── Opptak ───────────────────────────────────────────────────────────────── */
@@ -233,7 +240,6 @@ function startRecording() {
   audioChunks = [];
   recordStart = Date.now();
 
-  // Velg beste støttede lydformat
   const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
     ? 'audio/webm;codecs=opus'
     : MediaRecorder.isTypeSupported('audio/mp4')
@@ -251,7 +257,6 @@ function startRecording() {
     const duration = Date.now() - recordStart;
     console.log(`[Rec] Stoppet etter ${duration}ms`);
 
-    // Ignorer opptak kortere enn 500ms (utilsiktet trykk)
     if (duration < 500) { setVoiceState('ready'); return; }
 
     const type = mediaRecorder.mimeType || 'audio/webm';
@@ -277,7 +282,6 @@ function stopRecording() {
 function startVisualization() {
   if (!micStream || !audioCtx) return;
 
-  // Koble mikrofon-stream til AnalyserNode for frekvensmåling
   analyserSrc = audioCtx.createMediaStreamSource(micStream);
   analyser    = audioCtx.createAnalyser();
   analyser.fftSize = 128;
@@ -295,7 +299,6 @@ function startVisualization() {
     animFrameId = requestAnimationFrame(draw);
     analyser.getByteFrequencyData(dataArray);
     bars.forEach((bar, i) => {
-      // Sample stemmefrekvenser (ca. 80–4000 Hz)
       const start = 1 + i * binSlice;
       let sum = 0;
       for (let j = start; j < start + binSlice; j++) sum += dataArray[j] || 0;
@@ -334,7 +337,6 @@ async function transcribe(blob) {
 
     const transcript = (data.transcript || '').trim();
     if (!transcript) {
-      // Ingen gjenkjent tale — la brukeren prøve igjen
       console.warn('[STT] Tom transkripsjon');
       setVoiceState('ready');
       return;
@@ -351,8 +353,7 @@ async function transcribe(blob) {
   }
 }
 
-/* ── Tekst-til-tale ───────────────────────────────────────────────────────── */
-// Fjern markdown-formatering før TTS (ElevenLabs leser ikke markdown pent)
+/* ── Tekst-til-tale (Web Audio API — fungerer fordi AudioContext er låst opp) */
 function stripMarkdown(text) {
   return text
     .replace(/#{1,6}\s+/g, '')
@@ -365,38 +366,14 @@ function stripMarkdown(text) {
     .trim();
 }
 
-/* ── Listen-knapp hjelpere ────────────────────────────────────────────────── */
-function showListenBtn(state) {
-  const btn = document.getElementById('listen-btn');
-  if (!btn) return;
-  btn.removeAttribute('hidden');
-  if (state === 'loading') {
-    btn.disabled = true;
-    btn.innerHTML = '<span style="opacity:.5">⏳ Laster lyd...</span>';
-  } else if (state === 'ready') {
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Hør spørsmålet';
-  } else if (state === 'playing') {
-    btn.disabled = true;
-    btn.innerHTML = '🔊 Spiller av...';
-  }
-}
-
-function hideListenBtn() {
-  const btn = document.getElementById('listen-btn');
-  if (btn) btn.setAttribute('hidden', '');
-}
-
-/* ── Hent lyd fra ElevenLabs og gjør klar (ikke spill av ennå) ──────────── */
-async function prepareTTS(text) {
+async function playTTS(text) {
   const cleanText = stripMarkdown(text);
   if (!cleanText) return;
 
-  // Rydd opp forrige ventende lyd
-  if (pendingAudioUrl) { URL.revokeObjectURL(pendingAudioUrl); pendingAudioUrl = null; }
+  setVoiceState('ai_speaking');
+  await delay(500);
 
-  showListenBtn('loading');
-  console.log('[TTS] Henter lyd, lengde:', cleanText.length);
+  console.log('[TTS] Ber om lyd, lengde:', cleanText.length);
 
   try {
     const res = await fetch('/api/tts', {
@@ -405,52 +382,44 @@ async function prepareTTS(text) {
       body:    JSON.stringify({ text: cleanText }),
     });
 
+    console.log('[TTS] Status:', res.status);
+
     if (!res.ok) {
       console.warn('[TTS] API-feil:', res.status);
-      hideListenBtn();
+      if (!isDone) setVoiceState('ready');
       return;
     }
 
-    const blob = await res.blob();
-    pendingAudioUrl = URL.createObjectURL(blob);
-    console.log('[TTS] Blob klar, bytes:', blob.size);
-    showListenBtn('ready');
+    const arrayBuffer = await res.arrayBuffer();
+    console.log('[TTS] Buffer mottatt, bytes:', arrayBuffer.byteLength);
+
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+    console.log('[TTS] Dekodert, varighet:', decoded.duration.toFixed(1) + 's');
+
+    await new Promise((resolve) => {
+      const source = audioCtx.createBufferSource();
+      source.buffer = decoded;
+      source.connect(audioCtx.destination);
+      currentAudioSrc = source;
+
+      source.onended = () => {
+        currentAudioSrc = null;
+        console.log('[TTS] Avspilling ferdig');
+        resolve();
+      };
+      source.start(0);
+    });
 
   } catch (err) {
-    console.error('[TTS] Feil ved henting:', err.message);
-    hideListenBtn();
+    console.error('[TTS] Feil:', err.name, err.message);
   }
-}
 
-/* ── Spill av lyd ved direkte brukertrykk (Safari-kompatibelt) ───────────── */
-async function playPendingAudio() {
-  if (!pendingAudioUrl) return;
-
-  const url = pendingAudioUrl;
-  pendingAudioUrl = null;
-
-  showListenBtn('playing');
-  const avbrytBtn = document.getElementById('avbryt-btn');
-  if (avbrytBtn) avbrytBtn.removeAttribute('hidden');
-
-  currentAudio = new Audio(url);
-  currentAudio.playsinline = true;
-  currentAudio.setAttribute('playsinline', '');
-
-  await new Promise((resolve) => {
-    currentAudio.onended = () => { console.log('[TTS] Avspilling ferdig'); resolve(); };
-    currentAudio.onerror = (e) => { console.error('[TTS] Avspilling feilet:', e); resolve(); };
-    currentAudio.play().catch((err) => { console.error('[TTS] play() nektet:', err); resolve(); });
-  });
-
-  currentAudio = null;
-  URL.revokeObjectURL(url);
-  hideListenBtn();
-  if (avbrytBtn) avbrytBtn.setAttribute('hidden', '');
+  if (!isDone) setVoiceState('ready');
 }
 
 /* ── API-kall ─────────────────────────────────────────────────────────────── */
-// Start intervjuet — henter velkomstspørsmål fra Claude
 async function startInterview() {
   setVoiceState('idle');
   showTyping();
@@ -473,8 +442,7 @@ async function startInterview() {
     updateCounter();
 
     setupMicButton();
-    setVoiceState('ready');
-    prepareTTS(data.message);
+    await playTTS(data.message);
   } catch (err) {
     removeTyping();
     const online = navigator.onLine;
@@ -485,13 +453,11 @@ async function startInterview() {
   }
 }
 
-// Send brukerens svar og hent neste spørsmål (eller avsluttende tilbakemelding)
 async function sendMessage(userText) {
   history.push({ role: 'user', content: userText });
   appendBubble('user', userText);
   setVoiceState('idle');
 
-  // Naturlig pause før Claude kalles — simulerer at intervjueren tenker
   await delay(1500);
 
   showTyping();
@@ -499,7 +465,6 @@ async function sendMessage(userText) {
 
   try {
     if (isFinalQuestion) {
-      // Siste spørsmål: hent avslutningsmelding, deretter generér tilbakemelding
       const msgRes  = await fetch('/api/interview/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -511,9 +476,9 @@ async function sendMessage(userText) {
       history.push({ role: 'assistant', content: msgData.message });
       removeTyping();
       appendBubble('ai', msgData.message);
-      prepareTTS(msgData.message);
 
-      // Generer tilbakemeldingskort
+      await playTTS(msgData.message);
+
       showTyping();
       const fbRes  = await fetch('/api/interview/feedback', {
         method:  'POST',
@@ -528,7 +493,6 @@ async function sendMessage(userText) {
       finishInterview();
 
     } else {
-      // Hent neste spørsmål
       const res  = await fetch('/api/interview/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -542,9 +506,9 @@ async function sendMessage(userText) {
       appendBubble('ai', data.message);
       questionCount++;
       updateCounter();
-      resetHint(); // nytt spørsmål — hint tilgjengelig igjen
-      setVoiceState('ready');
-      prepareTTS(data.message);
+      resetHint();
+
+      await playTTS(data.message);
     }
   } catch (err) {
     removeTyping();
@@ -562,7 +526,6 @@ function setStatus(text) {
   if (el) el.textContent = text;
 }
 
-// Legg til en ny chat-boble (AI eller bruker)
 function appendBubble(role, text) {
   const chatInner = document.getElementById('chat-inner');
 
@@ -580,7 +543,6 @@ function appendBubble(role, text) {
 
   const bubble = document.createElement('div');
   bubble.className = `bubble ${role}`;
-  // AI-meldinger rendres som markdown; brukermeldinger vises som ren tekst
   bubble.innerHTML = role === 'ai' ? marked.parse(text) : '';
   if (role !== 'ai') bubble.textContent = text;
   row.appendChild(bubble);
@@ -589,7 +551,6 @@ function appendBubble(role, text) {
   scrollToBottom();
 }
 
-// Bygg og vis tilbakemeldingskort etter siste spørsmål
 function renderFeedbackCard(f) {
   const chatInner = document.getElementById('chat-inner');
 
@@ -634,7 +595,6 @@ function renderFeedbackCard(f) {
   scrollToBottom();
 }
 
-// Vis skriveindikator (tre prikker) mens AI tenker
 function showTyping() {
   const chatInner = document.getElementById('chat-inner');
 
@@ -667,21 +627,17 @@ function updateCounter() {
   el.textContent = `Spørsmål ${Math.min(questionCount, 5)} / 5`;
 }
 
-// Rydd opp alle ressurser og lukk mikrofon-seksjonen etter ferdig intervju
 function finishInterview() {
   isDone = true;
 
-  // Oppdater teller til "Ferdig"-tilstand
   const counter = document.getElementById('question-counter');
   counter.textContent        = 'Ferdig';
   counter.style.background   = 'rgba(34,197,94,0.12)';
   counter.style.borderColor  = 'rgba(34,197,94,0.35)';
   counter.style.color        = '#4ADE80';
 
-  // Stopp lydvisualisering
   stopVisualization();
 
-  // Fjern event-lyttere for å unngå minnelekkasje
   const btn       = document.getElementById('mic-btn');
   const avbrytBtn = document.getElementById('avbryt-btn');
   const hintBtn   = document.getElementById('hint-btn');
@@ -692,7 +648,6 @@ function finishInterview() {
   _avbrytHandler = null;
   _hintHandler   = null;
 
-  // Fjern mic-seksjonen fra DOM
   const micSection = document.getElementById('mic-section');
   if (micSection) {
     micSection.innerHTML     = '';
@@ -700,12 +655,6 @@ function finishInterview() {
     micSection.style.border  = 'none';
   }
 
-  // Stopp eventuell TTS-avspilling og rydd opp blob-URLer
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-  if (pendingAudioUrl) { URL.revokeObjectURL(pendingAudioUrl); pendingAudioUrl = null; }
-  hideListenBtn();
-
-  // Stopp mikrofon-tracks og lukk AudioContext (bølgeform-visualiserer)
   if (micStream) micStream.getTracks().forEach(t => t.stop());
   if (audioCtx)  audioCtx.close();
 }
