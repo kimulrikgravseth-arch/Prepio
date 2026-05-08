@@ -45,8 +45,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  document.getElementById('session-title').textContent =
-    `${interviewData.jobTitle} hos ${interviewData.company}`;
+  document.getElementById('session-title').textContent = interviewData.company
+    ? `${interviewData.jobTitle} hos ${interviewData.company}`
+    : interviewData.jobTitle;
 
   await requestMic();
   startInterview();
