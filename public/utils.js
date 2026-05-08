@@ -147,46 +147,58 @@ function setupBackToTop() {
   });
 }
 
-/* ── Hamburger-meny (mobil) ──────────────────────────────────
-   Åpner og lukker navigasjonsmenyen på smale skjermer.
+/* ── Slide-in meny fra venstre ───────────────────────────────
+   Hamburger åpner et panel som glir inn fra venstre side.
+   Fungerer på alle skjermstørrelser.
    ─────────────────────────────────────────────────────────── */
 function setupHamburger() {
-  const hamburger  = document.querySelector('.nav-hamburger');
-  const navLinks   = document.querySelector('.nav-links');
-  const navActions = document.querySelector('.nav-actions');
-  if (!hamburger || !navLinks) return;
+  const hamburger = document.querySelector('.nav-hamburger');
+  const panel     = document.getElementById('nav-panel');
+  const overlay   = document.getElementById('nav-overlay');
+  const closeBtn  = document.getElementById('nav-panel-close');
+  if (!hamburger || !panel) return;
 
-  const toggle = () => {
-    const isOpen = hamburger.getAttribute('aria-expanded') === 'true';
-    hamburger.setAttribute('aria-expanded', String(!isOpen));
-    hamburger.classList.toggle('open', !isOpen);
-    navLinks.classList.toggle('mobile-open', !isOpen);
-    navActions?.classList.toggle('mobile-open', !isOpen);
-    document.body.classList.toggle('menu-open', !isOpen);
+  // Marker aktiv lenke basert på URL
+  const path = window.location.pathname.replace(/\/$/, '');
+  panel.querySelectorAll('a.nav-panel-link').forEach(a => {
+    const href = a.getAttribute('href').replace(/\/$/, '');
+    if (href && path === href) a.classList.add('active');
+  });
+
+  const open = () => {
+    panel.classList.add('open');
+    overlay?.classList.add('open');
+    panel.setAttribute('aria-hidden', 'false');
+    hamburger.setAttribute('aria-expanded', 'true');
+    hamburger.classList.add('open');
+    document.body.classList.add('menu-open');
+    closeBtn?.focus();
   };
 
   const close = () => {
+    panel.classList.remove('open');
+    overlay?.classList.remove('open');
+    panel.setAttribute('aria-hidden', 'true');
     hamburger.setAttribute('aria-expanded', 'false');
     hamburger.classList.remove('open');
-    navLinks.classList.remove('mobile-open');
-    navActions?.classList.remove('mobile-open');
     document.body.classList.remove('menu-open');
   };
 
-  hamburger.addEventListener('click', toggle);
-
-  // Lukk ved klikk utenfor
-  document.addEventListener('click', (e) => {
-    if (!hamburger.closest('.nav-container').contains(e.target)) close();
+  hamburger.addEventListener('click', () => {
+    panel.classList.contains('open') ? close() : open();
   });
+
+  // Lukk ved klikk på overlay
+  overlay?.addEventListener('click', close);
+
+  // Lukk ved X-knapp
+  closeBtn?.addEventListener('click', close);
 
   // Lukk ved Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close();
-  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 
-  // Lukk hvis vi navigerer via et lenke i menyen
-  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+  // Lukk ved klikk på lenke i panelet
+  panel.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
 }
 
 /* ── Navbar-skygge ved scrolling ─────────────────────────────

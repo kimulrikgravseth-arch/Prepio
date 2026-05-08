@@ -14,84 +14,40 @@
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="nav-container">
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
       <a href="/" class="logo">Prepio</a>
-
-      <nav class="nav-links">
-        <a href="/priser" class="nav-link">Priser</a>
-
-        <!-- Verktøy-dropdown -->
-        <div class="nav-dropdown">
-          <button class="nav-link nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false">
-            Verktøy
-            <svg class="dropdown-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          <div class="nav-dropdown-menu" role="menu">
-            <a href="/interview" class="dropdown-item" role="menuitem">
-              <span class="dropdown-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-              </span>
-              <span class="dropdown-label">
-                <strong>AI-intervjutrener</strong>
-                <span>Øv til jobbintervjuet med stemme</span>
-              </span>
-            </a>
-            <a href="/cv-analyse" class="dropdown-item" role="menuitem">
-              <span class="dropdown-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-              </span>
-              <span class="dropdown-label">
-                <strong>CV-analyse</strong>
-                <span>Optimaliser CV-en din med AI</span>
-              </span>
-            </a>
-            <a href="/soknadsbrev" class="dropdown-item" role="menuitem">
-              <span class="dropdown-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"/>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-              </span>
-              <span class="dropdown-label">
-                <strong>Søknadsbrev</strong>
-                <span>Generer profesjonelle brev</span>
-              </span>
-            </a>
-            <a href="/lonnskalkulator" class="dropdown-item" role="menuitem">
-              <span class="dropdown-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23"/>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-              </span>
-              <span class="dropdown-label">
-                <strong>Lønnskalkulator</strong>
-                <span>Finn riktig lønn for deg</span>
-              </span>
-            </a>
-            <a href="/bedriftsbibliotek" class="dropdown-item" role="menuitem">
-              <span class="dropdown-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                  <polyline points="9 22 9 12 15 12 15 22"/>
-                </svg>
-              </span>
-              <span class="dropdown-label">
-                <strong>Bedrifter</strong>
-                <span>Utforsk norske arbeidsgivere</span>
-              </span>
-            </a>
+      <div class="nav-actions">
+        <a href="/interview" class="btn btn-primary">Start gratis</a>
+      </div>
     </div>
-        </div>
-      </nav>
+  </nav>
+
+  <!-- SLIDE-IN MENY FRA VENSTRE -->
+  <div class="nav-overlay" id="nav-overlay"></div>
+  <aside class="nav-panel" id="nav-panel" aria-hidden="true">
+    <div class="nav-panel-header">
+      <a href="/" class="logo">Prepio</a>
+      <button class="nav-panel-close" id="nav-panel-close" aria-label="Lukk meny">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-panel-links">
+      <a href="/priser"            class="nav-panel-link">Priser</a>
+      <a href="/cv-analyse"        class="nav-panel-link">CV-analyse</a>
+      <a href="/soknadsbrev"       class="nav-panel-link">Søknadsbrev</a>
+      <a href="/lonnskalkulator"   class="nav-panel-link">Lønnskalkulator</a>
+      <a href="/bedriftsbibliotek" class="nav-panel-link">Bedriftsbibliotek</a>
+      <button class="nav-panel-link nav-panel-btn" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+    </nav>
+    <div class="nav-panel-footer">
+      <a href="/interview" class="btn btn-primary btn-large btn-full">Start gratis →</a>
+    </div>
+  </aside>
 
       <div class="nav-actions">
         <button class="btn btn-ghost">Logg inn</button>

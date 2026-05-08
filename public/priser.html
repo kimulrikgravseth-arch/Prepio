@@ -15,14 +15,40 @@
   <!-- NAVBAR -->
   <nav class="navbar">
     <div class="nav-container">
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
       <a href="/" class="logo">Prepio</a>
-      <nav class="nav-links">
-        <a href="/priser"            class="nav-link nav-link-active">Priser</a>
-        <a href="/cv-analyse"        class="nav-link">CV-analyse</a>
-        <a href="/soknadsbrev"       class="nav-link">Søknadsbrev</a>
-        <a href="/lonnskalkulator"   class="nav-link">Lønnskalkulator</a>
-        <a href="/bedriftsbibliotek" class="nav-link">Bedrifter</a>
-      </nav>
+      <div class="nav-actions">
+        <a href="/interview" class="btn btn-primary">Start gratis</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SLIDE-IN MENY FRA VENSTRE -->
+  <div class="nav-overlay" id="nav-overlay"></div>
+  <aside class="nav-panel" id="nav-panel" aria-hidden="true">
+    <div class="nav-panel-header">
+      <a href="/" class="logo">Prepio</a>
+      <button class="nav-panel-close" id="nav-panel-close" aria-label="Lukk meny">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-panel-links">
+      <a href="/priser"            class="nav-panel-link">Priser</a>
+      <a href="/cv-analyse"        class="nav-panel-link">CV-analyse</a>
+      <a href="/soknadsbrev"       class="nav-panel-link">Søknadsbrev</a>
+      <a href="/lonnskalkulator"   class="nav-panel-link">Lønnskalkulator</a>
+      <a href="/bedriftsbibliotek" class="nav-panel-link">Bedriftsbibliotek</a>
+      <button class="nav-panel-link nav-panel-btn" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+    </nav>
+    <div class="nav-panel-footer">
+      <a href="/interview" class="btn btn-primary btn-large btn-full">Start gratis →</a>
+    </div>
+  </aside>
       <div class="nav-actions">
         <button class="btn btn-ghost" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
         <a href="/interview" class="btn btn-primary">Kom i gang</a>
