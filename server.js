@@ -639,11 +639,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ── Start server ──────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✅ Prepio kjører på http://localhost:${PORT}`);
-  const missing = REQUIRED_ENV.filter(k => !process.env[k]);
-  if (missing.length) {
-    console.warn(`⚠️  Mangler API-nøkler: ${missing.join(', ')} — noen funksjoner vil feile.`);
-  }
-});
+// ── Start server (kun ved direkte kjøring, ikke via Vercel) ──────────────────
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`✅ Prepio kjører på http://localhost:${PORT}`);
+    const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+    if (missing.length) {
+      console.warn(`⚠️  Mangler API-nøkler: ${missing.join(', ')} — noen funksjoner vil feile.`);
+    }
+  });
+}
+
+// Eksporter for Vercel serverless
+module.exports = app;
