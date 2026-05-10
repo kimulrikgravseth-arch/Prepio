@@ -151,7 +151,7 @@
   <script>
     (async () => {
       console.log('[Clerk] Init starter');
-      const clerk = new Clerk('pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA');
+      const clerk = new window.Clerk('pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA');
       await clerk.load();
       window._clerk = clerk;
       console.log('[Clerk] Bruker:', clerk.user ? clerk.user.id : 'ikke innlogget');
