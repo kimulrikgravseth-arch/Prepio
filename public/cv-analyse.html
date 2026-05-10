@@ -174,21 +174,35 @@ window.addEventListener('load', async () => {
   });
   window._clerk = window.Clerk;
   document.body.style.display = 'block';
-  if (!window.Clerk.user) {
-    window.Clerk.openSignIn({
-      afterSignInUrl: window.location.href,
-      afterSignUpUrl: window.location.href,
-      appearance: {
-        elements: {
-          modalCloseButton: { display: 'none' },
-          card: { borderRadius: '16px' }
-        }
+
+  const SIGN_IN_OPTS = {
+    afterSignInUrl: window.location.href,
+    afterSignUpUrl: window.location.href,
+    appearance: {
+      elements: {
+        modalCloseButton: { display: 'none' },
+        modalBackdrop: { pointerEvents: 'none' },
+        card: { borderRadius: '16px' }
       }
-    });
+    }
+  };
+
+  if (!window.Clerk.user) {
+    window.Clerk.openSignIn(SIGN_IN_OPTS);
   }
+
+  // Hindre Escape fra å lukke modalen
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !window.Clerk.user) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, true);
+
+  // Gjenåpne hvis brukeren likevel klarer å lukke
   document.addEventListener('click', () => {
     if (!window.Clerk.user) {
-      window.Clerk.openSignIn();
+      window.Clerk.openSignIn(SIGN_IN_OPTS);
     }
   });
 });
