@@ -162,13 +162,17 @@
   <script src="soknadsbrev.js"></script>
   <script>
     (async () => {
+      console.log('[Clerk] Init starter');
       const clerk = new Clerk('pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA');
       await clerk.load();
       window._clerk = clerk;
+      console.log('[Clerk] Bruker:', clerk.user ? clerk.user.id : 'ikke innlogget');
+      document.body.style.display = 'block';
       if (!clerk.user) {
-        clerk.openSignIn();
+        console.log('[Clerk] Åpner innlogging...');
+        clerk.openSignIn({ afterSignInUrl: window.location.href, afterSignUpUrl: window.location.href });
       } else {
-        document.body.style.display = 'block';
+        console.log('[Clerk] Innlogget — viser siden');
       }
     })();
   </script>
