@@ -89,7 +89,7 @@ async function runAnalysis() {
   formData.append('jobDescription', desc);
 
   try {
-    const res  = await fetch('/api/cv-analyse', { method: 'POST', body: formData });
+    const res  = await authFetch('/api/cv-analyse', { method: 'POST', body: formData });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Noe gikk galt.');
 

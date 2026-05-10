@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="bedriftsbibliotek.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <style>body { display: none; }</style>
 </head>
 <body>
 
@@ -140,5 +142,17 @@
 
   <script src="utils.js"></script>
   <script src="bedriftsbibliotek.js"></script>
-  </body>
+  <script>
+    (async () => {
+      const clerk = new Clerk('pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA');
+      await clerk.load();
+      window._clerk = clerk;
+      if (!clerk.user) {
+        clerk.openSignIn();
+      } else {
+        document.body.style.display = 'block';
+      }
+    })();
+  </script>
+</body>
 </html>

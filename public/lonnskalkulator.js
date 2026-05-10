@@ -32,7 +32,7 @@ async function calculate() {
   showView('loading');
 
   try {
-    const res  = await fetch('/api/lonnskalkulator', {
+    const res  = await authFetch('/api/lonnskalkulator', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),

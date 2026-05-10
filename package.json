@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.94.0",
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "compression": "^1.8.1",
     "dotenv": "^17.4.2",
     "express": "^4.18.2",

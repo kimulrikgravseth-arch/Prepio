@@ -34,7 +34,7 @@ async function generate() {
   showView('loading');
 
   try {
-    const res  = await fetch('/api/soknadsbrev', {
+    const res  = await authFetch('/api/soknadsbrev', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(payload),

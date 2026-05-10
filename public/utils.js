@@ -218,6 +218,21 @@ function setupKeyboardShortcuts() {
   });
 }
 
+/* ── Autentisert fetch (Clerk) ───────────────────────────────
+   Henter Clerk session-token og legger det til i Authorization-
+   headeren på alle utgående API-kall. Fungerer med både JSON-
+   og FormData-forespørsler. window._clerk settes av Clerk-init-
+   scriptet på hver beskyttet side.
+   ─────────────────────────────────────────────────────────── */
+async function authFetch(url, options = {}) {
+  const token = window._clerk?.session
+    ? await window._clerk.session.getToken()
+    : null;
+  const headers = { ...(options.headers || {}) };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers });
+}
+
 /* ── Auto-initialisering ─────────────────────────────────────
    Kjøres på alle sider automatisk ved DOMContentLoaded.
    ─────────────────────────────────────────────────────────── */

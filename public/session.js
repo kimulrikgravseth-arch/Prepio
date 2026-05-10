@@ -68,7 +68,7 @@ async function testTTS() {
 
   try {
     const t0  = Date.now();
-    const res = await fetch('/api/tts', {
+    const res = await authFetch('/api/tts', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ text: 'Hei, dette er en test av lydsystemet.' }),
@@ -310,7 +310,7 @@ async function fetchHint() {
   setVoiceState('idle');
 
   try {
-    const res  = await fetch('/api/interview/hint', {
+    const res  = await authFetch('/api/interview/hint', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ ...interviewData, messages: history }),
@@ -435,7 +435,7 @@ async function transcribe(blob) {
     const form = new FormData();
     form.append('audio', blob, 'audio.webm');
 
-    const res  = await fetch('/api/stt', { method: 'POST', body: form });
+    const res  = await authFetch('/api/stt', { method: 'POST', body: form });
     const data = await res.json();
 
     console.log('[STT] Respons:', res.status, data);
@@ -483,7 +483,7 @@ async function playTTS(text) {
 
   try {
     const t0  = Date.now();
-    const res = await fetch('/api/tts', {
+    const res = await authFetch('/api/tts', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ text: cleanText }),
@@ -536,7 +536,7 @@ async function startInterview() {
   showTyping();
 
   try {
-    const res  = await fetch('/api/interview/start', {
+    const res  = await authFetch('/api/interview/start', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(interviewData),
@@ -570,7 +570,7 @@ async function startArena() {
   showTyping();
 
   try {
-    const res  = await fetch('/api/arena/start', {
+    const res  = await authFetch('/api/arena/start', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(arenaData),
@@ -607,7 +607,7 @@ async function sendMessage(userText) {
   try {
     if (IS_ARENA) {
       // ── Arena-modus ──────────────────────────────────────────────────────
-      const res  = await fetch('/api/arena/message', {
+      const res  = await authFetch('/api/arena/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ ...arenaData, messages: history, messageCount: questionCount }),
@@ -638,7 +638,7 @@ async function sendMessage(userText) {
       await playTTS(outroMsg);
 
       showTyping();
-      const fbRes  = await fetch('/api/interview/feedback', {
+      const fbRes  = await authFetch('/api/interview/feedback', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ ...interviewData, messages: history }),
@@ -652,7 +652,7 @@ async function sendMessage(userText) {
 
     } else {
       // ── Intervju-modus: neste spørsmål (1–4) ─────────────────────────────
-      const res  = await fetch('/api/interview/message', {
+      const res  = await authFetch('/api/interview/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ ...interviewData, messages: history }),

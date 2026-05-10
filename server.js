@@ -7,6 +7,7 @@ const multer      = require('multer');
 const pdfParse    = require('pdf-parse');
 const mammoth     = require('mammoth');
 const compression = require('compression');
+const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -38,7 +39,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 // ── Sjekk at påkrevde miljøvariabler er satt ved oppstart ────────────────────
-const REQUIRED_ENV = ['ANTHROPIC_API_KEY', 'ELEVENLABS_API_KEY', 'OPENAI_API_KEY'];
+const REQUIRED_ENV = ['ANTHROPIC_API_KEY', 'ELEVENLABS_API_KEY', 'OPENAI_API_KEY', 'CLERK_SECRET_KEY'];
 REQUIRED_ENV.forEach(key => {
   if (!process.env[key]) console.warn(`⚠️  Mangler miljøvariabel: ${key}`);
 });
@@ -333,7 +334,7 @@ Snakk alltid norsk.`;
 }
 
 // ── API: Start intervju ───────────────────────────────────────────────────────
-app.post('/api/interview/start', async (req, res) => {
+app.post('/api/interview/start', ClerkExpressRequireAuth(), async (req, res) => {
   const { jobTitle, company, description, experience, interviewStyle } = req.body;
 
   // Kun stillingstittel og erfaringsnivå er påkrevd
@@ -373,7 +374,7 @@ app.post('/api/interview/start', async (req, res) => {
 });
 
 // ── API: Neste melding i samtalen ─────────────────────────────────────────────
-app.post('/api/interview/message', async (req, res) => {
+app.post('/api/interview/message', ClerkExpressRequireAuth(), async (req, res) => {
   const { jobTitle, company, description, experience, interviewStyle, messages } = req.body;
 
   const histErr = validateHistory(messages);
@@ -404,7 +405,7 @@ app.post('/api/interview/message', async (req, res) => {
 });
 
 // ── API: Strukturert tilbakemelding etter 5 spørsmål ─────────────────────────
-app.post('/api/interview/feedback', async (req, res) => {
+app.post('/api/interview/feedback', ClerkExpressRequireAuth(), async (req, res) => {
   const { jobTitle, company, messages } = req.body;
 
   const histErr = validateHistory(messages);
@@ -451,7 +452,7 @@ Vær konkret og spesifikk – referer gjerne til ting kandidaten faktisk sa. Bru
 });
 
 // ── API: Hint til neste svar ──────────────────────────────────────────────────
-app.post('/api/interview/hint', async (req, res) => {
+app.post('/api/interview/hint', ClerkExpressRequireAuth(), async (req, res) => {
   const { jobTitle, company, description, experience, interviewStyle, messages } = req.body;
 
   const histErr = validateHistory(messages);
@@ -560,7 +561,7 @@ Svar alltid på norsk. Bryt aldri rollen før etter 5 utvekslinger.`,
 }
 
 // ── API: Øvingsarena — start økt ─────────────────────────────────────────────
-app.post('/api/arena/start', async (req, res) => {
+app.post('/api/arena/start', ClerkExpressRequireAuth(), async (req, res) => {
   const { type, topic, opponent, difficulty } = req.body;
   if (!type || !topic) return res.status(400).json({ error: 'type og topic er påkrevd.' });
 
@@ -585,7 +586,7 @@ app.post('/api/arena/start', async (req, res) => {
 });
 
 // ── API: Øvingsarena — neste melding ─────────────────────────────────────────
-app.post('/api/arena/message', async (req, res) => {
+app.post('/api/arena/message', ClerkExpressRequireAuth(), async (req, res) => {
   const { type, topic, opponent, difficulty, messages, messageCount } = req.body;
   if (!type || !topic) return res.status(400).json({ error: 'type og topic er påkrevd.' });
 
@@ -611,7 +612,7 @@ app.post('/api/arena/message', async (req, res) => {
 });
 
 // ── API: Lønnskalkulator ──────────────────────────────────────────────────────
-app.post('/api/lonnskalkulator', async (req, res) => {
+app.post('/api/lonnskalkulator', ClerkExpressRequireAuth(), async (req, res) => {
   const { jobTitle, industry, experience, location, currentSalary } = req.body;
 
   const err =
@@ -692,7 +693,7 @@ Vær konkret med tall basert på oppdatert kunnskap om norsk lønnsnivå. Snakk 
 });
 
 // ── API: Søknadsbrev-generator ────────────────────────────────────────────────
-app.post('/api/soknadsbrev', async (req, res) => {
+app.post('/api/soknadsbrev', ClerkExpressRequireAuth(), async (req, res) => {
   const { name, jobTitle, company, jobDescription, about } = req.body;
 
   const err =
@@ -742,7 +743,7 @@ Format: Kun selve brevteksten, klar til å sende. Ingen ekstra kommentarer eller
 });
 
 // ── API: CV-analyse ───────────────────────────────────────────────────────────
-app.post('/api/cv-analyse', upload.single('cv'), async (req, res) => {
+app.post('/api/cv-analyse', ClerkExpressRequireAuth(), upload.single('cv'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Ingen fil lastet opp.' });
 
   const { jobTitle, jobDescription } = req.body;
@@ -818,7 +819,7 @@ Vær direkte, konkret og jordnær. Referer til faktisk innhold fra CV-en. Snakk 
 });
 
 // ── API: TTS — ElevenLabs ─────────────────────────────────────────────────────
-app.post('/api/tts', async (req, res) => {
+app.post('/api/tts', ClerkExpressRequireAuth(), async (req, res) => {
   const { text } = req.body;
   console.log('[TTS] ▶ Mottatt request, tekstlengde:', text?.length ?? 0);
 
@@ -888,7 +889,7 @@ app.post('/api/tts', async (req, res) => {
 });
 
 // ── API: STT — OpenAI Whisper ─────────────────────────────────────────────────
-app.post('/api/stt', audioUpload.single('audio'), async (req, res) => {
+app.post('/api/stt', ClerkExpressRequireAuth(), audioUpload.single('audio'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Ingen lydfil mottatt.' });
   if (req.file.size < 1000) return res.status(400).json({ error: 'Lydfilen er for kort.' });
 
