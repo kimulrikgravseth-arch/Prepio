@@ -124,14 +124,18 @@ async function testTTS() {
 
 /* ── Init ─────────────────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  const raw = sessionStorage.getItem('prepioInterview');
-  if (!raw) { window.location.href = '/interview'; return; }
-
-  try {
-    interviewData = JSON.parse(raw);
-  } catch {
-    window.location.href = '/interview';
-    return;
+  if (IS_ARENA) {
+    // Arena-modus navigerer direkte hit via URL-params — ingen sessionStorage-data nødvendig
+    interviewData = {};
+  } else {
+    const raw = sessionStorage.getItem('prepioInterview');
+    if (!raw) { window.location.href = '/interview'; return; }
+    try {
+      interviewData = JSON.parse(raw);
+    } catch {
+      window.location.href = '/interview';
+      return;
+    }
   }
 
   if (IS_ARENA) {
@@ -595,11 +599,10 @@ async function sendMessage(userText) {
   history.push({ role: 'user', content: userText });
   appendBubble('user', userText);
   setVoiceState('idle');
-
-  await delay(1500);
-
   showTyping();
-  const isFinalQuestion = questionCount >= 5;
+
+  // Intervjuet avsluttes kun etter nøyaktig 5 fullførte spørsmål og svar
+  const isFinalAnswer = questionCount >= 5;
 
   try {
     if (IS_ARENA) {
@@ -626,21 +629,13 @@ async function sendMessage(userText) {
         resetHint();
       }
 
-    } else if (isFinalQuestion) {
-      // ── Intervju-modus, siste spørsmål ───────────────────────────────────
-      const msgRes  = await fetch('/api/interview/message', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ ...interviewData, messages: history }),
-      });
-      const msgData = await msgRes.json();
-      if (!msgRes.ok) throw new Error(msgData.error || 'Ukjent feil');
-
-      history.push({ role: 'assistant', content: msgData.message });
+    } else if (isFinalAnswer) {
+      // ── Intervju-modus: 5. svar mottatt — vis outro og hent tilbakemelding ──
+      const outroMsg = 'Takk for at du tok deg tid! Du gjorde det bra. Her er tilbakemeldingen din:';
+      history.push({ role: 'assistant', content: outroMsg });
       removeTyping();
-      appendBubble('ai', msgData.message);
-
-      await playTTS(msgData.message);
+      appendBubble('ai', outroMsg);
+      await playTTS(outroMsg);
 
       showTyping();
       const fbRes  = await fetch('/api/interview/feedback', {
@@ -656,7 +651,7 @@ async function sendMessage(userText) {
       finishInterview();
 
     } else {
-      // ── Intervju-modus, neste spørsmål ───────────────────────────────────
+      // ── Intervju-modus: neste spørsmål (1–4) ─────────────────────────────
       const res  = await fetch('/api/interview/message', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
