@@ -8,6 +8,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
 </head>
 <body>
 
@@ -44,7 +51,7 @@
       <a href="/soknadsbrev"       class="nav-panel-link">Søknadsbrev</a>
       <a href="/lonnskalkulator"   class="nav-panel-link">Lønnskalkulator</a>
       <a href="/bedriftsbibliotek" class="nav-panel-link">Bedriftsbibliotek</a>
-      <button class="nav-panel-link nav-panel-btn" onclick="showToast('Logg inn kommer snart!')">Logg inn</button>
+      <button class="nav-panel-link nav-panel-btn" onclick="openClerkSignIn()">Logg inn</button>
     </nav>
     <div class="nav-panel-footer">
       <a href="/interview" class="btn btn-primary btn-large btn-full">Start gratis →</a>
@@ -52,9 +59,9 @@
   </aside>
 
       <div class="nav-actions">
-        <button class="btn btn-ghost">Logg inn</button>
+        <button class="btn btn-ghost" id="login-btn" onclick="openClerkSignIn()">Logg inn</button>
         <button class="btn btn-primary" id="nav-start-btn">Start gratis</button>
-                          </div>
+      </div>
       <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -335,6 +342,44 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeDropdown();
     });
+  </script>
+
+  <script>
+  function openClerkSignIn() {
+    if (!window.Clerk) return;
+    window.Clerk.openSignIn({
+      afterSignInUrl: '/interview',
+      afterSignUpUrl: '/interview',
+      appearance: {
+        elements: {
+          card: { borderRadius: '16px' }
+        }
+      }
+    });
+  }
+
+  window.addEventListener('load', async () => {
+    if (!window.Clerk) return;
+    await window.Clerk.load({
+      localization: {
+        signIn: {
+          start: {
+            title: 'Logg inn på Prepio',
+            subtitle: 'For å fortsette, logg inn eller lag en konto',
+            actionText: 'Har ikke konto?',
+            actionLink: 'Registrer deg'
+          }
+        }
+      }
+    });
+    window._clerk = window.Clerk;
+
+    const loginBtn = document.getElementById('login-btn');
+    if (window.Clerk.user && loginBtn) {
+      loginBtn.textContent = 'Min konto';
+      loginBtn.onclick = () => window.Clerk.openUserProfile();
+    }
+  });
   </script>
 </body>
 </html>
