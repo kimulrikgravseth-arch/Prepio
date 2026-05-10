@@ -110,15 +110,37 @@
   <script src="session.js"></script>
   <script>
 window.addEventListener('load', async () => {
-  await window.Clerk.load();
+  await window.Clerk.load({
+    localization: {
+      signIn: {
+        start: {
+          title: 'Logg inn på Prepio',
+          subtitle: 'For å fortsette, logg inn eller lag en konto',
+          actionText: 'Har ikke konto?',
+          actionLink: 'Registrer deg'
+        }
+      }
+    }
+  });
   window._clerk = window.Clerk;
   document.body.style.display = 'block';
   if (!window.Clerk.user) {
     window.Clerk.openSignIn({
       afterSignInUrl: window.location.href,
       afterSignUpUrl: window.location.href,
+      appearance: {
+        elements: {
+          modalCloseButton: { display: 'none' },
+          card: { borderRadius: '16px' }
+        }
+      }
     });
   }
+  document.addEventListener('click', () => {
+    if (!window.Clerk.user) {
+      window.Clerk.openSignIn();
+    }
+  });
 });
 </script>
 </body>
