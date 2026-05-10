@@ -184,18 +184,19 @@
   <script src="lonnskalkulator.js"></script>
   <script>
 window.addEventListener('load', async () => {
-  await window.Clerk.load();
-  window._clerk = window.Clerk;
-
-  if (!window.Clerk.user) {
-    // Ikke innlogget - vis innloggingsmodal
+  try {
+    await window.Clerk.load();
+    window._clerk = window.Clerk;
     document.body.style.display = 'block';
-    window.Clerk.openSignIn({
-      afterSignInUrl: window.location.href,
-      afterSignUpUrl: window.location.href,
-    });
-  } else {
-    // Innlogget - vis siden normalt
+
+    if (!window.Clerk.user) {
+      window.Clerk.openSignIn({
+        afterSignInUrl: window.location.href,
+        afterSignUpUrl: window.location.href,
+      });
+    }
+  } catch (err) {
+    console.error('Clerk feil:', err);
     document.body.style.display = 'block';
   }
 });

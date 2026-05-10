@@ -34,8 +34,16 @@ body {
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
-  overflow-x: hidden !important;
-  width: 100% !important;
+  overflow: hidden auto !important;
+  padding-right: 0 !important;
+  width: 100vw !important;
+}
+
+/* Hindre Clerk-modal fra å skyve innhold sideveis */
+body.clerk-modal-open,
+body[style*="padding-right"] {
+  padding-right: 0 !important;
+  overflow: hidden auto !important;
 }
 
 /* ===== NAVBAR ===== */

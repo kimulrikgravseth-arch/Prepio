@@ -225,17 +225,23 @@ function setupKeyboardShortcuts() {
    scriptet på hver beskyttet side.
    ─────────────────────────────────────────────────────────── */
 async function authFetch(url, options = {}) {
-  if (!window._clerk?.session) {
-    window.location.href = '/';
-    return;
-  }
   let token = null;
   try {
-    token = await window._clerk.session.getToken();
+    token = window._clerk?.session
+      ? await window._clerk.session.getToken()
+      : null;
   } catch (e) {
     console.warn('[authFetch] getToken feilet:', e.message);
-    window.location.href = '/';
-    return;
+  }
+  if (!token) {
+    // Ingen gyldig session — åpne Clerk-modal i stedet for å redirigere
+    if (window.Clerk && !window.Clerk.user) {
+      window.Clerk.openSignIn({
+        afterSignInUrl: window.location.href,
+        afterSignUpUrl: window.location.href,
+      });
+    }
+    throw new Error('Du må logge inn for å bruke Prepio.');
   }
   const headers = { ...(options.headers || {}) };
   headers['Authorization'] = `Bearer ${token}`;
