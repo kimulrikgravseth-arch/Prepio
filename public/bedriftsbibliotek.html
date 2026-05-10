@@ -150,22 +150,19 @@
   <script src="bedriftsbibliotek.js"></script>
   <script>
 window.addEventListener('load', async () => {
-  await window.Clerk.load({
-    localization: {
-      signIn: {
-        start: {
-          title: 'Logg inn på Prepio',
-          subtitle: 'For å fortsette, logg inn eller lag en konto',
-          actionText: 'Har ikke konto?',
-          actionLink: 'Registrer deg'
-        }
-      }
-    }
-  });
+  await window.Clerk.load();
   window._clerk = window.Clerk;
-  document.body.style.display = 'block';
+
   if (!window.Clerk.user) {
-    window.location.href = '/';
+    // Ikke innlogget - vis innloggingsmodal
+    document.body.style.display = 'block';
+    window.Clerk.openSignIn({
+      afterSignInUrl: window.location.href,
+      afterSignUpUrl: window.location.href,
+    });
+  } else {
+    // Innlogget - vis siden normalt
+    document.body.style.display = 'block';
   }
 });
 </script>
