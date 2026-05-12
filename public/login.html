@@ -61,6 +61,22 @@
       font-size: 14px;
     }
     .login-back:hover { color: var(--primary, #ff6b1a); }
+
+    /* Skjul Clerk-branding */
+    .cl-powered-by,
+    .cl-internal-1jb6vqx,
+    .cl-footer,
+    .cl-footerActionLink ~ .cl-internal-b3fm6y,
+    [data-clerk-component] ~ div {
+      display: none !important;
+    }
+
+    /* Skjul Clerk sin duplikat-header (vi har vår egen over) */
+    .cl-headerTitle,
+    .cl-headerSubtitle,
+    .cl-header {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -87,8 +103,13 @@
                 title: 'Logg inn på Prepio',
                 subtitle: 'For å fortsette, logg inn eller lag en konto',
                 actionText: 'Har ikke konto?',
-                actionLink: 'Registrer deg'
+                actionLink: 'Registrer deg',
+                actionButton: 'Fortsett'
               }
+            },
+            formButtonPrimary: 'Fortsett',
+            userButton: {
+              action__signOut: 'Logg ut'
             }
           }
         });
