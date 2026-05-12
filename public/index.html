@@ -27,6 +27,9 @@
       <a href="/" class="logo">Prepio</a>
       <div class="nav-actions">
         <a href="/interview" class="btn btn-primary">Start gratis</a>
+        <div id="user-menu" style="display:none">
+          <a class="user-avatar" id="user-avatar" href="/profil"></a>
+        </div>
       </div>
     </div>
   </nav>
@@ -51,7 +54,7 @@
       <a href="/soknadsbrev"       class="nav-panel-link">Søknadsbrev</a>
       <a href="/lonnskalkulator"   class="nav-panel-link">Lønnskalkulator</a>
       <a href="/bedriftsbibliotek" class="nav-panel-link">Bedriftsbibliotek</a>
-      <button class="nav-panel-link nav-panel-btn" onclick="openClerkSignIn()">Logg inn</button>
+      <button class="nav-panel-link nav-panel-btn" id="nav-login-btn" onclick="openClerkSignIn()">Logg inn</button>
     </nav>
     <div class="nav-panel-footer">
       <a href="/interview" class="btn btn-primary btn-large btn-full">Start gratis →</a>

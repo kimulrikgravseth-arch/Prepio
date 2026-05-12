@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Min side – Prepio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="profil.css" />
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
+  <style>
+    body { visibility: hidden; opacity: 0; transition: opacity 0.2s ease; }
+    body.auth-ready { visibility: visible; opacity: 1; }
+    #auth-loader {
+      visibility: visible !important; opacity: 1 !important;
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; z-index: 99999;
+    }
+    #auth-loader .auth-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid #eee; border-top-color: #ff6b1a;
+      border-radius: 50%; animation: auth-spin 0.8s linear infinite;
+    }
+    @keyframes auth-spin { to { transform: rotate(360deg); } }
+    body.auth-ready #auth-loader { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="auth-loader"><div class="auth-spinner"></div></div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <button class="nav-hamburger" aria-label="Åpne meny" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="/" class="logo">Prepio</a>
+      <div class="nav-actions">
+        <a href="/interview" class="btn btn-primary" id="nav-start-btn">Start gratis</a>
+        <div id="user-menu" style="display:none">
+          <div class="user-avatar" id="user-avatar"></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SLIDE-IN MENY -->
+  <div class="nav-overlay" id="nav-overlay"></div>
+  <aside class="nav-panel" id="nav-panel" aria-hidden="true">
+    <div class="nav-panel-header">
+      <a href="/" class="logo">Prepio</a>
+      <button class="nav-panel-close" id="nav-panel-close" aria-label="Lukk meny">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="nav-panel-links">
+      <a href="/priser"            class="nav-panel-link">Priser</a>
+      <a href="/interview"         class="nav-panel-link">AI-intervju <kbd class="nav-shortkey">I</kbd></a>
+      <a href="/ovingsarena"       class="nav-panel-link">Øvingsarena <span class="nav-badge">Pro</span></a>
+      <a href="/cv-analyse"        class="nav-panel-link">CV-analyse</a>
+      <a href="/soknadsbrev"       class="nav-panel-link">Søknadsbrev</a>
+      <a href="/lonnskalkulator"   class="nav-panel-link">Lønnskalkulator</a>
+      <a href="/bedriftsbibliotek" class="nav-panel-link">Bedriftsbibliotek</a>
+      <button class="nav-panel-link nav-panel-btn" id="nav-login-btn">Logg inn</button>
+    </nav>
+  </aside>
+
+  <main class="profil-page">
+    <div class="profil-container">
+
+      <header class="profil-header">
+        <div class="profil-avatar" id="profil-avatar"></div>
+        <div>
+          <h1 class="profil-name" id="profil-name">—</h1>
+          <p class="profil-email" id="profil-email">—</p>
+          <p class="profil-since" id="profil-since">—</p>
+        </div>
+      </header>
+
+      <section class="profil-stats" id="profil-stats">
+        <div class="stat-card">
+          <div class="stat-number" id="stat-total">—</div>
+          <div class="stat-label">Intervjuer gjennomført</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="stat-avg">—</div>
+          <div class="stat-label">Gjennomsnittlig score</div>
+        </div>
+      </section>
+
+      <section class="profil-history">
+        <h2 class="profil-history-title">Siste intervjuer</h2>
+
+        <div id="history-loading" class="history-loading">
+          <div class="auth-spinner" style="margin: 24px auto;"></div>
+        </div>
+
+        <div id="history-empty" class="history-empty" hidden>
+          Du har ingen fullførte intervjuer ennå. <a href="/interview">Start ditt første →</a>
+        </div>
+
+        <ul id="history-list" class="history-list" hidden></ul>
+      </section>
+
+      <div class="profil-actions">
+        <button class="btn-logout" id="logout-btn">Logg ut</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- DETALJER-MODAL -->
+  <div id="detail-overlay" class="detail-overlay" hidden>
+    <div class="detail-modal" role="dialog" aria-modal="true">
+      <button class="detail-close" id="detail-close" aria-label="Lukk">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <script src="utils.js"></script>
+  <script src="profil.js"></script>
+  <script>
+    window.addEventListener('load', async () => {
+      try {
+        await window.Clerk.load();
+        window._clerk = window.Clerk;
+        if (!window.Clerk.user) {
+          window.location.href = '/login?redirect=' + encodeURIComponent(window.location.href);
+          return;
+        }
+        document.body.classList.add('auth-ready');
+        if (typeof initProfil === 'function') initProfil();
+        if (typeof setupAuthMenu === 'function') setupAuthMenu();
+      } catch (err) {
+        console.error('Clerk feil:', err);
+        window.location.href = '/login';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -247,20 +247,41 @@ async function authFetch(url, options = {}) {
    Kjører når Clerk er ferdig lastet.
    ─────────────────────────────────────────────────────────── */
 function setupAuthMenu() {
+  const user = window.Clerk?.user;
+
+  // ── Navbar-avatar ──
+  const userMenu   = document.getElementById('user-menu');
+  const userAvatar = document.getElementById('user-avatar');
+  const navLoginBtn = document.getElementById('nav-login-btn');
+  const navStartBtn = document.getElementById('nav-start-btn');
+
+  if (user && userMenu && userAvatar) {
+    const email = user.primaryEmailAddress?.emailAddress || user.username || '';
+    const initials = (user.firstName?.[0] || email[0] || 'B').toUpperCase();
+    userAvatar.textContent = initials;
+    userAvatar.title = email || 'Min side';
+    userAvatar.onclick = () => { window.location.href = '/profil'; };
+    userMenu.style.display = 'flex';
+
+    // Skjul "Start gratis" / "Logg inn"-knapper i navbar når innlogget
+    document.querySelectorAll(
+      '.navbar .nav-actions a[href="/interview"], ' +
+      '.navbar .nav-actions #nav-start-btn, ' +
+      '.navbar .nav-actions #login-btn'
+    ).forEach(el => { el.style.display = 'none'; });
+  }
+
+  // ── Slide-in meny ──
   const navLinks = document.querySelector('.nav-panel-links');
   if (!navLinks) return;
-
-  // Finn "Logg inn"-knappen (siste .nav-panel-btn i lista)
   const loginBtn = navLinks.querySelector('.nav-panel-btn');
   if (!loginBtn) return;
 
-  const user = window.Clerk?.user;
-
   if (user) {
-    // Innlogget — vis brukerinfo øverst + bytt knapp til Logg ut
     const email = user.primaryEmailAddress?.emailAddress || user.username || 'Bruker';
-    const initial = (email[0] || 'U').toUpperCase();
+    const initial = (user.firstName?.[0] || email[0] || 'U').toUpperCase();
 
+    // Brukerinfo øverst
     if (!navLinks.querySelector('.nav-user-info')) {
       const userInfo = document.createElement('div');
       userInfo.className = 'nav-user-info';
@@ -271,16 +292,21 @@ function setupAuthMenu() {
       navLinks.insertBefore(userInfo, navLinks.firstChild);
     }
 
+    // "Min side"-lenke før Logg ut
+    if (!navLinks.querySelector('a[href="/profil"]')) {
+      const profilLink = document.createElement('a');
+      profilLink.href = '/profil';
+      profilLink.className = 'nav-panel-link';
+      profilLink.textContent = 'Min side';
+      navLinks.insertBefore(profilLink, loginBtn);
+    }
+
     loginBtn.textContent = 'Logg ut';
     loginBtn.onclick = async () => {
-      try {
-        await window.Clerk.signOut();
-      } finally {
-        window.location.href = '/';
-      }
+      try { await window.Clerk.signOut(); }
+      finally { window.location.href = '/'; }
     };
   } else {
-    // Ikke innlogget — naviger til /login
     loginBtn.textContent = 'Logg inn';
     loginBtn.onclick = () => { window.location.href = '/login'; };
   }

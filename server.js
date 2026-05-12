@@ -12,6 +12,42 @@ const { ClerkExpressRequireAuth } = require('@clerk/clerk-sdk-node');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+/* ── Enkel JSON-persistens for intervju-historikk ────────────────────────────
+   data/sessions.json: array av { userId, date, jobTitle, company, score, feedback }
+   Sync-IO holder det enkelt — lav skrivefrekvens (én per intervjuslutt).
+   ─────────────────────────────────────────────────────────────────────────── */
+const DATA_DIR      = path.join(__dirname, 'data');
+const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
+
+function ensureSessionsFile() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(SESSIONS_FILE)) fs.writeFileSync(SESSIONS_FILE, '[]');
+  } catch (e) { console.error('[sessions] init feilet:', e.message); }
+}
+ensureSessionsFile();
+
+function readSessions() {
+  try {
+    const raw = fs.readFileSync(SESSIONS_FILE, 'utf-8');
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch (e) {
+    console.error('[sessions] lese feilet:', e.message);
+    return [];
+  }
+}
+
+function appendSession(entry) {
+  try {
+    const all = readSessions();
+    all.push(entry);
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(all, null, 2));
+  } catch (e) {
+    console.error('[sessions] skrive feilet:', e.message);
+  }
+}
+
 /* ── Feil-logger til fil ─────────────────────────────────────────────────────
    Alle ukritiske feil skrives til errors.log slik at de kan inspiseres
    uten å avbryte serveren. Bruker sync-skriving for å unngå tap av data.
@@ -228,6 +264,7 @@ app.get('/cv-analyse',      (req, res) => res.sendFile(path.join(__dirname, 'pub
 app.get('/priser',          (req, res) => res.sendFile(path.join(__dirname, 'public', 'priser.html')));
 app.get('/ovingsarena',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'ovingsarena.html')));
 app.get('/login',           (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/profil',          (req, res) => res.sendFile(path.join(__dirname, 'public', 'profil.html')));
 
 // ── Input-validering ──────────────────────────────────────────────────────────
 
@@ -442,13 +479,52 @@ Vær konkret og spesifikk – referer gjerne til ting kandidaten faktisk sa. Bru
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('AI returnerte ugyldig format');
 
-    res.json(JSON.parse(jsonMatch[0]));
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Lagre i historikk
+    try {
+      const userId = req.auth?.userId;
+      if (userId) {
+        appendSession({
+          userId,
+          date:     new Date().toISOString(),
+          jobTitle: jobTitle || '',
+          company:  company  || '',
+          score:    Number(parsed.score) || null,
+          feedback: parsed,
+        });
+      }
+    } catch (e) { logError('sessions/append', e); }
+
+    res.json(parsed);
   } catch (err) {
     const status = err.status || 500;
     logError('interview/feedback', err);
     res.status(status === 503 ? 503 : 500).json({
       error: status === 503 ? err.message : 'Klarte ikke generere tilbakemelding. Prøv igjen.',
     });
+  }
+});
+
+// ── API: Profil-historikk ────────────────────────────────────────────────────
+app.get('/api/profil/historikk', ClerkExpressRequireAuth(), (req, res) => {
+  try {
+    const userId = req.auth?.userId;
+    if (!userId) return res.status(401).json({ error: 'Ikke innlogget' });
+    const all  = readSessions();
+    const mine = all
+      .filter(s => s.userId === userId)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    const totalScore = mine.reduce((s, x) => s + (x.score || 0), 0);
+    const avgScore   = mine.length ? +(totalScore / mine.length).toFixed(1) : 0;
+    res.json({
+      total: mine.length,
+      avgScore,
+      sessions: mine,
+    });
+  } catch (err) {
+    logError('profil/historikk', err);
+    res.status(500).json({ error: 'Klarte ikke hente historikk.' });
   }
 });
 

@@ -809,6 +809,28 @@ body {
   overflow-y: auto;
 }
 
+/* Navbar bruker-avatar */
+#user-menu {
+  display: flex;
+  align-items: center;
+}
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #FC6A03;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s;
+}
+.user-avatar:hover { transform: scale(1.05); }
+
 .nav-user-info {
   display: flex;
   align-items: center;
