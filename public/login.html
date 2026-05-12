@@ -62,13 +62,19 @@
     }
     .login-back:hover { color: var(--primary, #ff6b1a); }
 
-    /* Skjul Clerk-branding */
+    /* Skjul Clerk-branding (alle varianter) */
+    [data-clerk-component] + div,
     .cl-powered-by,
+    .cl-internal-b3fm6y,
     .cl-internal-1jb6vqx,
     .cl-footer,
     .cl-footerActionLink ~ .cl-internal-b3fm6y,
-    [data-clerk-component] ~ div {
+    [data-clerk-component] ~ div,
+    div[class*="powered"],
+    div[class*="cl-powered"] {
       display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
     }
 
     /* Skjul Clerk sin duplikat-header (vi har vår egen over) */
@@ -115,16 +121,20 @@
         });
         window._clerk = window.Clerk;
 
-        // Allerede innlogget? Send rett til /interview
+        // Les ?redirect= fra URL — send brukeren tilbake dit etter innlogging
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect') || '/interview';
+
+        // Allerede innlogget? Send rett videre
         if (window.Clerk.user) {
-          window.location.href = '/interview';
+          window.location.href = redirect;
           return;
         }
 
         // Monter sign-in komponenten (ikke modal)
         window.Clerk.mountSignIn(document.getElementById('clerk-sign-in'), {
-          afterSignInUrl: '/interview',
-          afterSignUpUrl: '/interview',
+          afterSignInUrl: redirect,
+          afterSignUpUrl: redirect,
           appearance: {
             elements: {
               card: { borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.08)' }

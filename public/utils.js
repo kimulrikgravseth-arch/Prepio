@@ -242,6 +242,61 @@ async function authFetch(url, options = {}) {
   return fetch(url, { ...options, headers });
 }
 
+/* ── Auth-aware nav-panel ─────────────────────────────────────
+   Bytter ut "Logg inn" med "Logg ut" + brukerinfo når innlogget.
+   Kjører når Clerk er ferdig lastet.
+   ─────────────────────────────────────────────────────────── */
+function setupAuthMenu() {
+  const navLinks = document.querySelector('.nav-panel-links');
+  if (!navLinks) return;
+
+  // Finn "Logg inn"-knappen (siste .nav-panel-btn i lista)
+  const loginBtn = navLinks.querySelector('.nav-panel-btn');
+  if (!loginBtn) return;
+
+  const user = window.Clerk?.user;
+
+  if (user) {
+    // Innlogget — vis brukerinfo øverst + bytt knapp til Logg ut
+    const email = user.primaryEmailAddress?.emailAddress || user.username || 'Bruker';
+    const initial = (email[0] || 'U').toUpperCase();
+
+    if (!navLinks.querySelector('.nav-user-info')) {
+      const userInfo = document.createElement('div');
+      userInfo.className = 'nav-user-info';
+      userInfo.innerHTML = `
+        <div class="nav-user-avatar">${initial}</div>
+        <div class="nav-user-email">${email}</div>
+      `;
+      navLinks.insertBefore(userInfo, navLinks.firstChild);
+    }
+
+    loginBtn.textContent = 'Logg ut';
+    loginBtn.onclick = async () => {
+      try {
+        await window.Clerk.signOut();
+      } finally {
+        window.location.href = '/';
+      }
+    };
+  } else {
+    // Ikke innlogget — naviger til /login
+    loginBtn.textContent = 'Logg inn';
+    loginBtn.onclick = () => { window.location.href = '/login'; };
+  }
+}
+
+// Kjøres så snart Clerk har lastet (via load-handlerne på hver side)
+// eller manuelt: window.setupAuthMenu()
+window.setupAuthMenu = setupAuthMenu;
+window.addEventListener('load', async () => {
+  if (!window.Clerk) return;
+  try {
+    await window.Clerk.load();
+    setupAuthMenu();
+  } catch (_) { /* håndteres av side-init */ }
+});
+
 /* ── Auto-initialisering ─────────────────────────────────────
    Kjøres på alle sider automatisk ved DOMContentLoaded.
    ─────────────────────────────────────────────────────────── */

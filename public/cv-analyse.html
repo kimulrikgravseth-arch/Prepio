@@ -16,9 +16,28 @@
   src="https://pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
   type="text/javascript"
 ></script>
-  <style>body { display: none; overflow: hidden !important; }</style>
+  <style>
+    body { visibility: hidden; opacity: 0; transition: opacity 0.2s ease; }
+    body.auth-ready { visibility: visible; opacity: 1; }
+    #auth-loader {
+      visibility: visible !important; opacity: 1 !important;
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff; z-index: 99999;
+    }
+    #auth-loader .auth-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid #eee; border-top-color: #ff6b1a;
+      border-radius: 50%; animation: auth-spin 0.8s linear infinite;
+    }
+    @keyframes auth-spin { to { transform: rotate(360deg); } }
+    body.auth-ready #auth-loader { display: none; }
+  </style>
 </head>
 <body>
+
+  <div id="auth-loader"><div class="auth-spinner"></div></div>
+
 
   <!-- NAVBAR -->
   <nav class="navbar">
@@ -165,10 +184,10 @@ window.addEventListener('load', async () => {
     window._clerk = window.Clerk;
 
     if (!window.Clerk.user) {
-      window.location.href = '/login';
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.href);
       return;
     }
-    document.body.style.display = 'block';
+    document.body.classList.add('auth-ready');
   } catch (err) {
     console.error('Clerk feil:', err);
     window.location.href = '/login';
