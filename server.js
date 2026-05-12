@@ -227,6 +227,7 @@ app.get('/soknadsbrev',     (req, res) => res.sendFile(path.join(__dirname, 'pub
 app.get('/cv-analyse',      (req, res) => res.sendFile(path.join(__dirname, 'public', 'cv-analyse.html')));
 app.get('/priser',          (req, res) => res.sendFile(path.join(__dirname, 'public', 'priser.html')));
 app.get('/ovingsarena',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'ovingsarena.html')));
+app.get('/login',           (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 
 // ── Input-validering ──────────────────────────────────────────────────────────
 

@@ -16,20 +16,6 @@
   src="https://pk_test_Y2hvaWNlLXN0YXJsaW5nLTkuY2xlcmsuYWNjb3VudHMuZGV2JA.clerk.accounts.dev/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
   type="text/javascript"
 ></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const observer = new MutationObserver(() => {
-    document.body.style.paddingRight = '0px';
-    document.body.style.overflow = 'hidden auto';
-    document.documentElement.style.paddingRight = '0px';
-  });
-
-  observer.observe(document.body, {
-    attributes: true,
-    attributeFilter: ['style']
-  });
-});
-</script>
   <style>body { display: none; overflow: hidden !important; }</style>
 </head>
 <body>
@@ -167,17 +153,15 @@ window.addEventListener('load', async () => {
   try {
     await window.Clerk.load();
     window._clerk = window.Clerk;
-    document.body.style.display = 'block';
 
     if (!window.Clerk.user) {
-      window.Clerk.openSignIn({
-        afterSignInUrl: window.location.href,
-        afterSignUpUrl: window.location.href,
-      });
+      window.location.href = '/login';
+      return;
     }
+    document.body.style.display = 'block';
   } catch (err) {
     console.error('Clerk feil:', err);
-    document.body.style.display = 'block';
+    window.location.href = '/login';
   }
 });
 </script>

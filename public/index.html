@@ -346,38 +346,22 @@
 
   <script>
   function openClerkSignIn() {
-    if (!window.Clerk) return;
-    window.Clerk.openSignIn({
-      afterSignInUrl: '/interview',
-      afterSignUpUrl: '/interview',
-      appearance: {
-        elements: {
-          card: { borderRadius: '16px' }
-        }
-      }
-    });
+    window.location.href = '/login';
   }
 
   window.addEventListener('load', async () => {
     if (!window.Clerk) return;
-    await window.Clerk.load({
-      localization: {
-        signIn: {
-          start: {
-            title: 'Logg inn på Prepio',
-            subtitle: 'For å fortsette, logg inn eller lag en konto',
-            actionText: 'Har ikke konto?',
-            actionLink: 'Registrer deg'
-          }
-        }
-      }
-    });
-    window._clerk = window.Clerk;
+    try {
+      await window.Clerk.load();
+      window._clerk = window.Clerk;
 
-    const loginBtn = document.getElementById('login-btn');
-    if (window.Clerk.user && loginBtn) {
-      loginBtn.textContent = 'Min konto';
-      loginBtn.onclick = () => window.Clerk.openUserProfile();
+      const loginBtn = document.getElementById('login-btn');
+      if (window.Clerk.user && loginBtn) {
+        loginBtn.textContent = 'Min konto';
+        loginBtn.onclick = () => window.Clerk.openUserProfile();
+      }
+    } catch (err) {
+      console.error('Clerk feil:', err);
     }
   });
   </script>

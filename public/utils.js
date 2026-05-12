@@ -234,13 +234,7 @@ async function authFetch(url, options = {}) {
     console.warn('[authFetch] getToken feilet:', e.message);
   }
   if (!token) {
-    // Ingen gyldig session — åpne Clerk-modal i stedet for å redirigere
-    if (window.Clerk && !window.Clerk.user) {
-      window.Clerk.openSignIn({
-        afterSignInUrl: window.location.href,
-        afterSignUpUrl: window.location.href,
-      });
-    }
+    window.location.href = '/login';
     throw new Error('Du må logge inn for å bruke Prepio.');
   }
   const headers = { ...(options.headers || {}) };
