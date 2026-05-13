@@ -487,6 +487,7 @@ Vær konkret og spesifikk – referer gjerne til ting kandidaten faktisk sa. Bru
       if (userId) {
         appendSession({
           userId,
+          type:     'intervju',
           date:     new Date().toISOString(),
           jobTitle: jobTitle || '',
           company:  company  || '',
@@ -506,21 +507,183 @@ Vær konkret og spesifikk – referer gjerne til ting kandidaten faktisk sa. Bru
   }
 });
 
+// ── API: Arena-feedback ──────────────────────────────────────────────────────
+app.post('/api/arena/feedback', ClerkExpressRequireAuth(), async (req, res) => {
+  const { type, topic, opponent, difficulty, messages } = req.body;
+  if (!type || !topic) return res.status(400).json({ error: 'type og topic er påkrevd.' });
+  const histErr = validateHistory(messages);
+  if (histErr) return res.status(400).json({ error: histErr });
+
+  const typeLabels = {
+    salg:        'salgsøvelse',
+    pitching:    'pitch-økt',
+    forhandling: 'forhandling',
+    kunde:       'kundesamtale',
+  };
+  const label = typeLabels[type] || 'øving';
+
+  const feedbackSystem = `Du er en erfaren norsk coach. Du har nettopp gjennomført en ${label} der brukeren øvde på "${topic}" mot en ${opponent || 'motpart'} på nivå ${difficulty || 'Middels'}.
+
+Basert på samtalen, gi en strukturert og ærlig tilbakemelding på norsk.
+
+Svar KUN med et gyldig JSON-objekt – ingen annen tekst, ingen markdown-blokk:
+{
+  "score": <heltall fra 1 til 10>,
+  "intro": "<én kort setning som oppsummerer prestasjonen>",
+  "bra": ["<konkret punkt>", "<konkret punkt>", "<konkret punkt>"],
+  "forbedring": ["<konkret punkt>", "<konkret punkt>", "<konkret punkt>"],
+  "avslutning": "<varm, motiverende avslutning på 1-2 setninger>"
+}
+
+Vær konkret og spesifikk. Bruk jordnær norsk.`;
+
+  try {
+    const client   = new Anthropic();
+    const response = await claudeLimiter.run(() =>
+      withRetry(() => client.messages.create({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system:     feedbackSystem,
+        messages:   [...messages, { role: 'user', content: 'Gi meg tilbakemeldingen nå.' }],
+      }, { timeout: API_TIMEOUT_MS }))
+    );
+
+    const text      = response.content[0].text.trim();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('AI returnerte ugyldig format');
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    try {
+      const userId = req.auth?.userId;
+      if (userId) {
+        appendSession({
+          userId,
+          type,
+          date:     new Date().toISOString(),
+          jobTitle: topic    || '',
+          company:  opponent || '',
+          score:    Number(parsed.score) || null,
+          feedback: parsed,
+        });
+      }
+    } catch (e) { logError('sessions/append-arena', e); }
+
+    res.json(parsed);
+  } catch (err) {
+    logError('arena/feedback', err);
+    res.status(500).json({ error: 'Klarte ikke generere tilbakemelding. Prøv igjen.' });
+  }
+});
+
+// ── Hjelpere for statistikk ──────────────────────────────────────────────────
+function avgScore(list) {
+  if (!list.length) return 0;
+  const sum = list.reduce((s, x) => s + (x.score || 0), 0);
+  return +(sum / list.length).toFixed(1);
+}
+function bestScore(list) {
+  return list.reduce((m, x) => (x.score || 0) > m ? (x.score || 0) : m, 0);
+}
+function modeOf(list, key) {
+  const counts = {};
+  for (const x of list) {
+    const k = (x[key] || '').trim();
+    if (!k) continue;
+    counts[k] = (counts[k] || 0) + 1;
+  }
+  let best = ''; let max = 0;
+  for (const [k, v] of Object.entries(counts)) {
+    if (v > max) { best = k; max = v; }
+  }
+  return best;
+}
+function topByAvgScore(list, key, lowest = false) {
+  const groups = {};
+  for (const x of list) {
+    const k = (x[key] || '').trim();
+    if (!k || x.score == null) continue;
+    if (!groups[k]) groups[k] = { sum: 0, n: 0 };
+    groups[k].sum += x.score;
+    groups[k].n += 1;
+  }
+  let bestKey = ''; let bestAvg = lowest ? Infinity : -Infinity;
+  for (const [k, { sum, n }] of Object.entries(groups)) {
+    const a = sum / n;
+    if (lowest ? a < bestAvg : a > bestAvg) { bestAvg = a; bestKey = k; }
+  }
+  return bestKey;
+}
+
+function computeStats(type, list) {
+  const base = {
+    total:    list.length,
+    avgScore: avgScore(list),
+  };
+  if (!list.length) return { ...base, bestScore: 0 };
+
+  switch (type) {
+    case 'intervju':
+      return {
+        ...base,
+        bestScore: bestScore(list),
+        mostPracticed: modeOf(list, 'jobTitle'),
+      };
+    case 'salg':
+      return {
+        ...base,
+        bestScore: bestScore(list),
+        bestProduct:    topByAvgScore(list, 'jobTitle'),
+        toughOpponent:  topByAvgScore(list, 'company', true),
+      };
+    case 'pitching':
+      return {
+        ...base,
+        bestScore: bestScore(list),
+        bestTopic:       topByAvgScore(list, 'jobTitle'),
+        bestInvestor:    topByAvgScore(list, 'company'),
+      };
+    case 'forhandling':
+      return {
+        ...base,
+        bestScore: bestScore(list),
+        bestType:        topByAvgScore(list, 'jobTitle'),
+        bestOpponent:    topByAvgScore(list, 'company'),
+      };
+    case 'kunde':
+      return {
+        ...base,
+        bestScore: bestScore(list),
+        toughestCustomer: topByAvgScore(list, 'company', true),
+      };
+    default:
+      return base;
+  }
+}
+
 // ── API: Profil-historikk ────────────────────────────────────────────────────
 app.get('/api/profil/historikk', ClerkExpressRequireAuth(), (req, res) => {
   try {
     const userId = req.auth?.userId;
     if (!userId) return res.status(401).json({ error: 'Ikke innlogget' });
+
     const all  = readSessions();
     const mine = all
       .filter(s => s.userId === userId)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
-    const totalScore = mine.reduce((s, x) => s + (x.score || 0), 0);
-    const avgScore   = mine.length ? +(totalScore / mine.length).toFixed(1) : 0;
+
+    const TYPES = ['intervju', 'salg', 'pitching', 'forhandling', 'kunde'];
+    const byType = {};
+    TYPES.forEach(t => { byType[t] = mine.filter(s => s.type === t); });
+
+    const stats = { all: { total: mine.length, avgScore: avgScore(mine), bestScore: bestScore(mine) } };
+    TYPES.forEach(t => { stats[t] = computeStats(t, byType[t]); });
+
     res.json({
-      total: mine.length,
-      avgScore,
+      total:    mine.length,
+      avgScore: avgScore(mine),
       sessions: mine,
+      byType,
+      stats,
     });
   } catch (err) {
     logError('profil/historikk', err);

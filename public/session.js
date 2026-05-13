@@ -622,6 +622,21 @@ async function sendMessage(userText) {
       await playTTS(data.message);
 
       if (data.isComplete) {
+        // Hent og lagre arena-feedback før vi avslutter
+        try {
+          showTyping();
+          const fbRes = await authFetch('/api/arena/feedback', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ ...arenaData, messages: history }),
+          });
+          const feedback = await fbRes.json();
+          removeTyping();
+          if (fbRes.ok) renderFeedbackCard(feedback);
+        } catch (e) {
+          removeTyping();
+          console.warn('[arena] feedback feilet:', e.message);
+        }
         finishInterview();
       } else {
         questionCount++;

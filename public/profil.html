@@ -90,19 +90,22 @@
         </div>
       </header>
 
-      <section class="profil-stats" id="profil-stats">
-        <div class="stat-card">
-          <div class="stat-number" id="stat-total">—</div>
-          <div class="stat-label">Intervjuer gjennomført</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="stat-avg">—</div>
-          <div class="stat-label">Gjennomsnittlig score</div>
-        </div>
-      </section>
+      <!-- FANER -->
+      <div class="profil-tabs" id="profil-tabs" role="tablist">
+        <button class="profil-tab active" data-type="all"         role="tab">Alle</button>
+        <button class="profil-tab"        data-type="intervju"    role="tab">🎯 Intervju</button>
+        <button class="profil-tab"        data-type="salg"        role="tab">🛒 Salgsøving</button>
+        <button class="profil-tab"        data-type="pitching"    role="tab">🚀 Pitching</button>
+        <button class="profil-tab"        data-type="forhandling" role="tab">💰 Forhandling</button>
+        <button class="profil-tab"        data-type="kunde"       role="tab">🤝 Kundesamtaler</button>
+      </div>
 
+      <!-- TYPESPESIFIKK STATISTIKK -->
+      <section class="profil-stats" id="profil-stats"></section>
+
+      <!-- HISTORIKK -->
       <section class="profil-history">
-        <h2 class="profil-history-title">Siste intervjuer</h2>
+        <h2 class="profil-history-title" id="history-title">Siste økter</h2>
 
         <div id="history-loading" class="history-loading">
           <div class="auth-spinner" style="margin: 24px auto;"></div>
